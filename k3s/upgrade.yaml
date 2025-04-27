@@ -1,0 +1,13 @@
+---
+- name: Upgrade and update Debian-based systems
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages to the latest version
+      apt:
+        upgrade: dist
+
