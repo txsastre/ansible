@@ -6,9 +6,5 @@ all:
             ansible_host: 192.168.56.12
         ks3-3:
             ansible_host: 192.168.56.13
-    children:
-        ks3:
-            hosts:
-                ks3-1:
-                ks3-2:
-                ks3-3:
+        nfs-server:
+            ansible_host: 192.168.56.10
