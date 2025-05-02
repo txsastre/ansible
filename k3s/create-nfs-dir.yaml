@@ -1,0 +1,26 @@
+---
+- name: Crear directori per al volum NFS
+  hosts: all
+  become: yes
+  tasks:
+    - name: Crear directori /mnt/k8s-vol
+      file:
+        path: /mnt/k8s-vol
+        state: directory
+        mode: '0755'
+    
+    - name: Afegir línia de muntatge NFS a /etc/fstab
+      lineinfile:
+        path: /etc/fstab
+        line: '192.168.70.10:/volume1/k8s-vol /mnt/k8s-vol nfs defaults,_netdev 0 0'
+        state: present
+
+    - name: Muntar el volum NFS
+      command: mount -a
+      register: mount_output
+      ignore_errors: yes
+
+    - name: Mostrar missatge d'error si el muntatge falla
+      debug:
+        msg: "Error al muntar el volum NFS: {{ mount_output.stderr }}"
+      when: mount_output.rc != 0

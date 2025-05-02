@@ -1,0 +1,20 @@
+---
+- name: Manage packages on Debian-based systems
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+
+    - name: Ensure required packages are installed
+      apt:
+        name:
+          - nfs-common
+          - nano
+        state: present
+      when: ansible_os_family == "Debian"
