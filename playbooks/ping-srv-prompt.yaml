@@ -1,0 +1,13 @@
+---
+- name: Ping all hosts
+  #hosts: all
+  hosts: "{{ target_hosts | default('all') }}"  # Usará 'all' si no se especifica
+
+  vars_prompt:
+    - name: "target_hosts"
+      prompt: "¿Sobre qué VMs quieres aplicar el playbook? (Ej: 'vm1,vm2' o 'all')"
+      private: false
+      
+  tasks:
+    - name: Ping hosts
+      ansible.builtin.ping:

@@ -1,0 +1,18 @@
+---
+- name: Upgrade Red Hat packages
+  hosts: "{{ target_hosts | default('all') }}"  # Usará 'all' si no se especifica
+  become: true
+
+  vars_prompt:
+    - name: "target_hosts"
+      prompt: "¿Sobre qué VMs quieres aplicar el playbook? (Ej: 'vm1,vm2' o 'all')"
+      private: false
+  
+  tasks:
+    - name: Update all packages to the latest version
+      yum:
+        name: '*'
+        state: latest
+    - name: Reboot the system if a kernel update was applied
+      reboot:
+        reboot_timeout: 300
