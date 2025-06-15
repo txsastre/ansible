@@ -1,0 +1,43 @@
+---
+- name: Check VGS status
+  hosts: "{{ host_a_ampliar }}"  # <- Usa la variable directamente  become: true
+  # vars_prompt:
+
+  #   - name: host_a_ampliar
+  #     private: false
+  #     prompt: 
+  #       "nombre host a ampliar"
+
+  #   - name: vgs_a_ampliar
+  #     private: false
+  #     prompt: 
+  #       "vgs a ampliar"
+        
+  #   - name: lvs_a_ampliar
+  #     private: false
+  #     prompt: 
+  #       "lvm a ampliar"
+
+  #   - name: lvs_size
+  #     private: false
+  #     prompt: 
+  #       "Enter the size to increase the LVM volume group (e.g., 10G):"
+  tasks:
+    - name: show host_a_ampliar
+      debug:
+        msg: "host a ampliar {{host_a_ampliar}}"
+
+    - name: show lvs_a_ampliar
+      debug:
+        msg: "lvs_a_ampliar is set to {{ lvs_a_ampliar }}"
+
+    - name: show lvs_size
+      debug:
+        msg: "lvs_size is set to {{ lvs_size }}"
+
+    - name: Ampliar LVM
+      community.general.lvol:
+        vg: "{{ vgs_a_ampliar }}"
+        lv: "{{ lvs_a_ampliar }}"
+        size: "+{{ lvs_size }}"
+        resizefs: yes

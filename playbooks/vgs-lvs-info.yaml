@@ -1,0 +1,20 @@
+---
+- name: Check VGS status
+  hosts: all
+  become: true
+  tasks:
+    - name: Check VGS status
+      command: vgs
+      register: vgs_output
+
+    - name: Display VGS output
+      debug:
+        var: vgs_output.stdout
+
+    - name: "Obtener información de LVs en formato estructurado"
+      command: lvs 
+      register: lvs_output
+
+    - name: "mostar lvs"  
+      debug:
+        var: lvs_output.stdout_lines
