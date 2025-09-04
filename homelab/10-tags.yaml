@@ -1,0 +1,119 @@
+---
+- name: Install Apache on all servers
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tasks: []
+  pre_tasks:
+
+    - name: install updates (redhat)
+      tags: allways 
+      dnf:
+        update_only: yes
+        update_cache: yes
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8
+
+    - name: install updates (debian)
+      tags: allways 
+      apt:
+        upgrade: dist
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+- name : Install Apache on all servers - specific
+  hosts: web_servers
+  gather_facts: no
+  become: yes
+  tasks:
+
+    - name : Install apache / httpd 
+      tags: apache,apache2,ubuntu,debian
+      ansible.builtin.package:
+        name: 
+          - httpd
+          - php
+        update_cache: yes
+        state: present 
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8        
+
+    - name : Install apache debian 
+      tags: apache,apache2,centos,redhat,httpd
+      ansible.builtin.package:
+        name: 
+          - apache2
+          - libapache2-mod-php          
+        update_cache: yes
+        state: present 
+      when: ansible_os_family == "Debian"
+      
+    - name: Allow HTTP and HTTPS services - Redhat Firewall 
+      firewalld:
+        service: "{{ item }}"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop:
+        - http
+        - https
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8    
+
+    - name: Start Apache - Redhat
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8
+
+    - name: Start Apache - Debian 
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+      when: ansible_os_family == "Debian" and ansible_distribution_major_version | int >= 12
+
+- hosts: db_servers
+  become: true
+  gather_facts: no
+  tasks:
+
+    - name: Install MariaDB
+      tags: centos,db,mariadb,redhat
+      ansible.builtin.package:
+        name: mariadb-server
+        state: present
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8
+
+    - name: Start and enable MariaDB service
+      tags: centos,db,mariadb,redhat
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8
+
+    - name: Install Mariadb Debian
+      tags: debian,ubuntu,centos,db
+      ansible.builtin.package:
+        name: mariadb-server
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Start and enable MariaDB service Debian
+      tags: debian,ubuntu,centos,db
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+      when: ansible_os_family == "Debian"
+
+- hosts: file_servers
+  become: true
+  gather_facts: no
+  tasks:
+
+    - name: Install Samba
+      tags: samba 
+      ansible.builtin.package:
+        name: samba
+        state: present
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8      

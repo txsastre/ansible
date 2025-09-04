@@ -1,0 +1,41 @@
+---
+- name: Configurar DNS y métricas de rutas
+  hosts: all
+  become: yes
+  gather_facts: no
+  collections:
+    - community.general
+  tasks:
+    - name: Configurar conexión NAT con DNS y métrica
+      community.general.nmcli:
+        conn_name: "NAT"
+        dns4: "8.8.8.8 1.1.1.1"
+        dns4_ignore_auto: yes
+        dns4_search: ""
+        route_metric4: 100
+        state: present
+
+    - name: Configurar conexión host-only sin DNS y con métrica alta
+      community.general.nmcli:
+        conn_name: "host-only"
+        dns4: ""
+        dns4_ignore_auto: yes
+        never_default4: yes
+        route_metric4: 1000
+        state: present
+
+    - name: Down conexiones de red para aplicar cambios   
+      community.general.nmcli:
+        conn_name: "{{ item }}"
+        state: down
+      loop:
+        - "NAT"
+        - "host-only"
+
+    - name: UP conexiones de red para aplicar cambios   
+      community.general.nmcli:
+        conn_name: "{{ item }}"
+        state: up
+      loop:
+        - "NAT"
+        - "host-only"
