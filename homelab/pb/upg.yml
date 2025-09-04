@@ -1,0 +1,32 @@
+---
+- name: Comprovar i actualitzar paquets pendents RHEL/CentOS
+  hosts: all
+  become: yes
+  gather_facts: no
+
+  vars:
+    update_confirmed: false
+
+  tasks:
+    - name: Llistar paquets amb actualitzacions disponibles
+      ansible.builtin.dnf:
+        list: updates
+      register: update_list
+
+    - name: Mostrar la llista de paquets a actualitzar
+      debug:
+        msg: "{{ item.name }}-{{ item.version }}"
+      loop: "{{ update_list.results }}"
+
+    - name: Mostrar quants paquets tenen actualitzacions
+      ansible.builtin.debug:
+        msg: "Hi ha {{ update_list.results | length }} paquets actualitzables"
+
+    - name: Actualitzar tots els paquets a la versió més nova
+      dnf:
+        name: "*"
+        state: latest
+
+    - name: Missatge si no s'actualitza res en aquest host
+      debug:
+        msg: "No s'ha actualitzat cap paquet a {{ inventory_hostname }}."

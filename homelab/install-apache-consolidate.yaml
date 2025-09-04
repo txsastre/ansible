@@ -1,0 +1,35 @@
+---
+- name: Install Apache on all servers
+  hosts: all
+  become: yes
+
+  tasks:
+      
+    - name : Install apache / httpd 
+      ansible.builtin.package:
+        name: 
+          - httpd
+          - php
+          - php-mysqlnd
+        update_cache: yes
+        state: present 
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8        
+
+    - name: Allow HTTP and HTTPS services
+      firewalld:
+        service: "{{ item }}"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop:
+        - http
+        - https
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8    
+
+    - name: Start Apache 
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 8
+

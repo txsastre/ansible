@@ -1,0 +1,70 @@
+---
+- name: Inventario oVirt con búsqueda de discos por ID de VM
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - .env.ovirt
+
+  tasks:
+    - name: Autenticar en oVirt
+      ovirt_auth:
+        url: "{{ ovirt_url }}"
+        username: "{{ ovirt_username }}"
+        password: "{{ ovirt_password }}"
+        insecure: true
+      register: ovirt_auth
+
+    - name: Obtener todas las VMs
+      ovirt_vm_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+      register: all_vms
+
+    - name: Crear lista de VMs con sus discos
+      set_fact:
+        vms_with_disks: []
+        
+    - name: Obtener discos para cada VM
+      block:
+        - name: Obtener discos de la VM {{ item.name }}
+          ovirt_disk_info:
+            auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+            pattern: "vm.id={{ item.id }}"
+          register: disk_result
+
+        - name: Registrar VM con información de discos
+          set_fact:
+            vms_with_disks: "{{ vms_with_disks + [{'vm': item, 'disks': disk_result.ovirt_disks | default([])}] }}"
+      loop: "{{ all_vms.ovirt_vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Mostrar inventario completo
+      debug:
+        msg: |
+          === INVENTARIO OVIRT ===
+          {% for vm_data in vms_with_disks %}
+          VM: {{ vm_data.vm.name }} ({{ vm_data.vm.status }})
+          SO: {{ vm_data.vm.os.type | default('N/A') }}
+          vCPUs: {{ vm_data.vm.cpu.topology.cores * vm_data.vm.cpu.topology.sockets }}
+          RAM: {{ (vm_data.vm.memory | int / 1073741824) | round(1) }} GB
+          Discos ({{ vm_data.disks | length }}):
+          {% for disk in vm_data.disks %}
+          - {{ disk.alias | default(disk.id) }}: {{ (disk.provisioned_size | int / 1073741824) | round(1) }} GB ({{ disk.status }})
+          {% else %}
+          - Sin discos
+          {% endfor %}
+          ======================
+          {% endfor %}
+
+    - name: Resumen estadístico
+      debug:
+        msg: |
+          === RESUMEN ===
+          Total VMs: {{ vms_with_disks | length }}
+          Total discos: {{ vms_with_disks | map(attribute='disks') | map('length') | sum }}
+          Almacenamiento total: {{ (vms_with_disks | map(attribute='disks') | flatten | map(attribute='provisioned_size') | sum | int / 1073741824) | round(1) }} GB
+
+    - name: Cerrar sesión oVirt
+      ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"

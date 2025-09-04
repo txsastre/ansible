@@ -1,0 +1,43 @@
+---
+- name: Listado de VMs en oVirt (tabla)
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - .env.ovirt
+
+  tasks:
+
+    - name: Autenticar en oVirt
+      ovirt_auth:
+        url: "{{ ovirt_url }}"
+        username: "{{ ovirt_username }}"
+        password: "{{ ovirt_password }}"
+        insecure: "{{ ovirt_insecure }}"
+      register: ovirt_auth
+
+    - name: Obtener información de todas las VMs
+      ovirt_vm_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+      register: vm_info
+
+    - name: Construir tabla de VMs
+      set_fact:
+        vm_table: |
+          Nombre               Estado     vCPUs Memoria(MB)
+          {% for item in vm_info.ovirt_vms -%}
+          {{ "%-20s %-10s %-5s %-10s" | format(
+               item.name,
+               item.status,
+               (item.cpu.topology.sockets * item.cpu.topology.cores * item.cpu.topology.threads),
+               (item.memory / 1024 / 1024) | int
+             ) }}
+          {% endfor %}
+
+    - name: Mostrar tabla
+      debug:
+        msg: "{{ vm_table }}"
+
+    - name: Cerrar sesión oVirt
+      ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"

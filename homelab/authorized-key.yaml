@@ -1,0 +1,18 @@
+- name: Añadir clave pública SSH a todos los usuarios
+  hosts: all
+  become: yes
+  gather_facts: no
+  vars:
+    ansible_user_id: "{{ lookup('env','USER') }}"
+
+  tasks:
+  # - name: "show {{ ansible_user_id }}"
+  #   debug:
+  #     msg: "El usuario actual es {{ ansible_user_id }}"
+      
+  - name: Añadir clave pública SSH a todos los usuarios
+    authorized_key:
+      user: "{{ ansible_user_id }}"
+      key: "{{ lookup('file', '/home/' + ansible_user_id + '/.ssh/id_ed25519.pub') }}"
+      state: present
+

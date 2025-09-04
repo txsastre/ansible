@@ -1,0 +1,34 @@
+---
+- name: Debug - Inspeccionar estructura de datos de VMs
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - .env.ovirt
+
+  tasks:
+    - name: Autenticar en oVirt
+      ovirt_auth:
+        url: "{{ ovirt_url }}"
+        username: "{{ ovirt_username }}"
+        password: "{{ ovirt_password }}"
+        insecure: true
+      register: ovirt_auth
+
+    - name: Obtener todas las VMs
+      ovirt_vm_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+        all_content: yes
+      register: all_vms
+
+    - name: Mostrar estructura de la primera VM
+      debug:
+        var: all_vms.ovirt_vms[0]
+
+    - name: Mostrar estructura de disk_attachments de la primera VM
+      debug:
+        var: all_vms.ovirt_vms[0].disk_attachments
+
+    - name: Cerrar sesión oVirt
+      ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"

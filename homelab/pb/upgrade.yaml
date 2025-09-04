@@ -1,0 +1,34 @@
+- name: Comprovar i actualitzar paquets amb DNF amb confirmació i llista
+  hosts: all
+  become: yes
+  gather_facts: false
+
+  tasks:
+    - name: Llistar paquets amb actualitzacions disponibles
+      ansible.builtin.dnf:
+        list: updates
+      register: update_list
+
+    - name: Mostrar la llista completa de paquets a actualitzar
+      ansible.builtin.debug:
+        var: update_list.results
+
+    - name: Mostrar quants paquets tenen actualitzacions
+      ansible.builtin.debug:
+        msg: "Hi ha {{ update_list.results | length }} paquets actualitzables"
+
+    - name: Confirmació per continuar amb l'actualització
+      ansible.builtin.pause:
+        prompt: "Vols continuar amb l'actualització de tots els paquets? (s/n)"
+      register: confirmacio        
+
+    - name: Actualitzar tots els paquets a la versió més nova
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+      when: confirmacio.user_input | lower == "s"
+
+    - name: Missatge si no s'actualitza res
+      debug:
+        msg: "No s'ha actualitzat cap paquet."
+      when: confirmacio.user_input | lower != 's'

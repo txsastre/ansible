@@ -1,0 +1,253 @@
+---
+- name: Inventario VMs Linux RHEV/oVirt - Con discos corregidos
+  hosts: localhost
+  gather_facts: yes
+  vars_files:
+    - .env.ovirt
+
+
+  tasks:
+    - name: Show vars
+      debug:
+        msg:
+          - "ovirt_url: {{ ovirt_url }}"
+          - "ovirt_username: {{ ovirt_username }}"
+          - "ovirt_password: {{ ovirt_password }}"
+          - "ovirt_insecure: {{ ovirt_insecure }}"
+          
+    - name: Autenticar en oVirt
+      ovirt_auth:
+        url: "{{ ovirt_url }}"
+        username: "{{ ovirt_username }}"
+        password: "{{ ovirt_password }}"
+        insecure: true
+      register: ovirt_auth
+
+    - name: Obtener todas las VMs
+      ovirt_vm_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+        fetch_nested: true
+        nested_attributes:
+          - disk_attachments
+          - nics
+      register: all_vms
+
+    - name: Debug - Total VMs encontradas
+      debug:
+        msg: "Total VMs encontradas: {{ all_vms.ovirt_vms | length }}"
+
+    - name: Filtrar VMs Linux
+      set_fact:
+        linux_vms: "{{ linux_vms | default([]) + [item] }}"
+      when: >
+        (item.os is defined and item.os.type is defined and
+         item.os.type | lower | regex_search('linux|rhel|centos|ubuntu|debian|suse|fedora|oracle|alma|rocky')) or
+        (item.name | lower | regex_search('linux|rhel|centos|ubuntu|debian|web|db|app|srv'))
+      loop: "{{ all_vms.ovirt_vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Debug - VMs Linux encontradas
+      debug:
+        msg: "VMs Linux identificadas: {{ linux_vms | default([]) | length }}"
+
+    - name: Obtener información de todos los discos
+      ovirt_disk_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+      register: all_disks
+
+    - name: Debug - Total discos encontrados
+      debug:
+        msg: "Total discos en el entorno: {{ all_disks.ovirt_disks | length }}"
+
+    - name: Debug - Analizar estructura de discos (primera VM Linux)
+      debug:
+        msg: |
+          === ANÁLISIS DE DISCOS PARA {{ linux_vms[0].name }} ===
+          Disk attachments en VM: {{ linux_vms[0].disk_attachments | length if linux_vms[0].disk_attachments is defined else 'No definido' }}
+
+          Discos que tienen VMs asociadas: {{ all_disks.ovirt_disks | selectattr('vms', 'defined') | list | length }}
+
+          {% set vm_name = linux_vms[0].name %}
+          Discos para {{ vm_name }}:
+          {% for disk in all_disks.ovirt_disks %}
+          {% if disk.vms is defined and disk.vms | length > 0 %}
+          {% for vm in disk.vms %}
+          {% if vm.name == vm_name %}
+          - {{ disk.name }}: {{ (disk.provisioned_size / 1024 / 1024 / 1024) | round(2) }} GB
+          {% endif %}
+          {% endfor %}
+          {% endif %}
+          {% endfor %}
+      when:
+        - linux_vms is defined
+        - linux_vms | length > 0
+        - ansible_verbosity >= 1
+
+    - name: Mostrar info detallada de cada VM Linux
+      vars:
+        # Método corregido para obtener discos
+        vm_disks: >-
+          {% set disks = [] -%}
+          {% for disk in all_disks.ovirt_disks -%}
+            {% if disk.vms is defined and disk.vms | length > 0 -%}
+              {% for vm in disk.vms -%}
+                {% if vm.name == item.name -%}
+                  {% set _ = disks.append(disk) -%}
+                {% endif -%}
+              {% endfor -%}
+            {% endif -%}
+          {% endfor -%}
+          {{ disks }}
+
+        total_disk_size: >-
+          {% set total = 0 -%}
+          {% for disk in all_disks.ovirt_disks -%}
+            {% if disk.vms is defined and disk.vms | length > 0 -%}
+              {% for vm in disk.vms -%}
+                {% if vm.name == item.name -%}
+                  {% set total = total + (disk.provisioned_size | int) -%}
+                {% endif -%}
+              {% endfor -%}
+            {% endif -%}
+          {% endfor -%}
+          {{ total }}
+
+        disk_count: >-
+          {% set count = 0 -%}
+          {% for disk in all_disks.ovirt_disks -%}
+            {% if disk.vms is defined and disk.vms | length > 0 -%}
+              {% for vm in disk.vms -%}
+                {% if vm.name == item.name -%}
+                  {% set count = count + 1 -%}
+                {% endif -%}
+              {% endfor -%}
+            {% endif -%}
+          {% endfor -%}
+          {{ count }}
+
+        cpu_total: >-
+          {{ (item.cpu.topology.cores * item.cpu.topology.sockets)
+             if (item.cpu is defined and item.cpu.topology is defined) else 'N/A' }}
+
+        ram_gb: >-
+          {{ (item.memory | int / 1024 / 1024 / 1024) | round(2)
+             if item.memory is defined else 'N/A' }}
+
+        os_name: >-
+          {{ item.os.type if (item.os is defined and item.os.type is defined) else 'Linux' }}
+
+      debug:
+        msg: |
+          ==========================================
+          VM: {{ item.name }}
+          SO: {{ os_name }}
+          Estado: {{ item.status }}
+          vCPUs: {{ cpu_total }}
+          RAM: {{ ram_gb }} GB
+          Cluster: {{ item.cluster.name | default('N/A') }}
+          Host: {{ item.host.name | default('N/A') }}
+
+          DISCOS ENCONTRADOS: {{ disk_count }}
+          Tamaño total: {{ (total_disk_size | int / 1024 / 1024 / 1024) | round(2) }} GB
+
+          Detalle de discos:
+          {% for disk in all_disks.ovirt_disks %}
+          {% if disk.vms is defined and disk.vms | length > 0 %}
+          {% for vm in disk.vms %}
+          {% if vm.name == item.name %}
+          - {{ disk.name }}: {{ (disk.provisioned_size / 1024 / 1024 / 1024) | round(2) }} GB ({{ disk.format | default('N/A') }})
+          {% endif %}
+          {% endfor %}
+          {% endif %}
+          {% endfor %}
+          ==========================================
+      loop: "{{ linux_vms | default([]) }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Crear archivo CSV - Cabecera
+      copy:
+        content: "Nombre,SO,Estado,vCPUs,RAM_GB,Cluster,Host,Num_Discos,Tamano_Total_GB"
+        dest: "./linux_vms_fixed_{{ ansible_date_time.date }}.csv"
+
+    - name: Procesar cada VM y añadir al CSV
+      vars:
+        disk_count: >-
+          {% set count = 0 -%}
+          {% for disk in all_disks.ovirt_disks -%}
+            {% if disk.vms is defined and disk.vms | length > 0 -%}
+              {% for vm in disk.vms -%}
+                {% if vm.name == item.name -%}
+                  {% set count = count + 1 -%}
+                {% endif -%}
+              {% endfor -%}
+            {% endif -%}
+          {% endfor -%}
+          {{ count }}
+
+        total_disk_size: >-
+          {% set total = 0 -%}
+          {% for disk in all_disks.ovirt_disks -%}
+            {% if disk.vms is defined and disk.vms | length > 0 -%}
+              {% for vm in disk.vms -%}
+                {% if vm.name == item.name -%}
+                  {% set total = total + (disk.provisioned_size | int) -%}
+                {% endif -%}
+              {% endfor -%}
+            {% endif -%}
+          {% endfor -%}
+          {{ total }}
+
+        cpu_total: >-
+          {{ (item.cpu.topology.cores * item.cpu.topology.sockets)
+             if (item.cpu is defined and item.cpu.topology is defined) else 'N/A' }}
+
+        ram_gb: >-
+          {{ (item.memory | int / 1024 / 1024 / 1024) | round(2)
+             if item.memory is defined else 'N/A' }}
+
+        os_name: >-
+          {{ item.os.type if (item.os is defined and item.os.type is defined) else 'Linux' }}
+
+      lineinfile:
+        path: "./linux_vms_fixed_{{ ansible_date_time.date }}.csv"
+        line: "{{ item.name }},{{ os_name }},{{ item.status }},{{ cpu_total }},{{ ram_gb }},{{ item.cluster.name | default('N/A') }},{{ item.host.name | default('N/A') }},{{ disk_count }},{{ (total_disk_size | int / 1024 / 1024 / 1024) | round(2) }}"
+      loop: "{{ linux_vms | default([]) }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Resumen final
+      debug:
+        msg: |
+          ========================================
+          RESUMEN FINAL - VMs LINUX
+          ========================================
+          Total VMs analizadas: {{ all_vms.ovirt_vms | length }}
+          VMs Linux encontradas: {{ linux_vms | default([]) | length }}
+          Total discos en entorno: {{ all_disks.ovirt_disks | length }}
+
+          Archivo CSV generado: ./linux_vms_fixed_{{ ansible_date_time.date }}.csv
+          ========================================
+
+    - name: Mostrar contenido del CSV generado
+      debug:
+        msg: "{{ lookup('file', './linux_vms_fixed_' + ansible_date_time.date + '.csv') }}"
+      when: ansible_verbosity >= 1
+
+    - name: Cerrar sesión oVirt
+      ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+
+# ==========================================
+# EJECUCIÓN CON DEBUG PARA VER DISCOS:
+# ==========================================
+#
+# ansible-playbook ovirt_disks_fixed.yml \
+#   -e ovirt_url=https://tu-ovirt.com/ovirt-engine/api \
+#   -e ovirt_username=admin@internal \
+#   -e vault_ovirt_password=tu_password \
+#   -v
+#
+# ==========================================

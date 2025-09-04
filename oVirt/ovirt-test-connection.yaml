@@ -1,0 +1,40 @@
+# curl -X GET \
+#  -u "admin@internal:2443" \
+#  -k \
+#  "https://ovirt2.lab.local/ovirt-engine/api" \
+#  -H "Accept: application/json"
+
+---
+- name: Test oVirt connection
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - .env.ovirt
+
+  tasks:
+    - name: show vars 
+      debug:
+        msg: 
+          - "ovirt_url: {{ ovirt_url }}"
+          - "ovirt_username: {{ ovirt_username }}"
+          - "ovirt_password: {{ ovirt_password }}"
+          - "ovirt_insecure: {{ ovirt_insecure }}"
+
+    - name: Autenticar en oVirt
+      ovirt_auth:
+        url: "{{ ovirt_url }}"
+        username: "{{ ovirt_username }}"
+        password: "{{ ovirt_password }}"
+        insecure: "{{ ovirt_insecure }}"
+      register: ovirt_auth
+
+     
+    - name: Ensure connection is successful
+      debug:
+        msg: "Successfully connected to oVirt"
+      when: ovirt_auth is defined
+
+    - name: Cerrar sesión oVirt
+      ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"

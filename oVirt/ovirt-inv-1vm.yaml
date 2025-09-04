@@ -1,0 +1,82 @@
+---
+- name: Obtener información de discos de una VM específica
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - .env.ovirt
+
+  vars:
+    target_vm: "alpine1"
+
+  tasks:
+    - name: Autenticar en oVirt
+      ovirt_auth:
+        url: "{{ ovirt_url }}"
+        username: "{{ ovirt_username }}"
+        password: "{{ ovirt_password }}"
+        insecure: true
+      register: ovirt_auth
+
+    - name: Obtener información de la VM específica
+      ovirt_vm_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+        pattern: "name={{ target_vm }}"
+      register: vm_info
+
+    - name: Verificar que la VM existe
+      fail:
+        msg: "La VM '{{ target_vm }}' no fue encontrada"
+      when: vm_info.ovirt_vms | length == 0
+
+    - name: Obtener todos los discos del sistema
+      ovirt_disk_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+      register: all_disks
+
+    - name: Mostrar información básica de la VM
+      debug:
+        msg: |
+          ========== INFORMACIÓN DE LA VM ==========
+          Nombre: {{ vm_info.ovirt_vms[0].name }}
+          ID: {{ vm_info.ovirt_vms[0].id }}
+          Estado: {{ vm_info.ovirt_vms[0].status }}
+          SO: {{ vm_info.ovirt_vms[0].os.type | default('N/A') }}
+          vCPUs: {{ (vm_info.ovirt_vms[0].cpu.topology.cores * vm_info.ovirt_vms[0].cpu.topology.sockets) | default('N/A') }}
+          RAM: {{ (vm_info.ovirt_vms[0].memory | default(0) | int / 1073741824) | round(1) }} GB
+          Cluster: {{ vm_info.ovirt_vms[0].cluster.name | default('N/A') }}
+          Host: {{ vm_info.ovirt_vms[0].host.name | default('N/A') }}
+
+    - name: Buscar discos por nombre de VM en el alias
+      set_fact:
+        vm_disks: "{{ all_disks.ovirt_disks | selectattr('alias', 'defined') | selectattr('alias', 'match', target_vm) | list }}"
+
+    - name: Mostrar discos asociados a la VM
+      debug:
+        msg: |
+          ========== DISCOS ASOCIADOS ==========
+          {% if vm_disks | length > 0 %}
+          {% for disk in vm_disks %}
+          Disco {{ loop.index }}:
+          - ID: {{ disk.id }}
+          - Alias: {{ disk.alias }}
+          - Tamaño: {{ (disk.provisioned_size | int / 1073741824) | round(1) }} GB
+          - Estado: {{ disk.status }}
+          - Formato: {{ disk.format }}
+          - Tipo: {{ disk.storage_type | default('N/A') }}
+          {% endfor %}
+          {% else %}
+          No se encontraron discos con '{{ target_vm }}' en el alias.
+          {% endif %}
+
+    - name: Mostrar todos los discos disponibles (para referencia)
+      debug:
+        msg: |
+          ========== TODOS LOS DISCOS DEL SISTEMA ==========
+          {% for disk in all_disks.ovirt_disks %}
+          - {{ disk.alias | default(disk.id) }}: {{ (disk.provisioned_size | int / 1073741824) | round(1) }} GB ({{ disk.status }})
+          {% endfor %}
+
+    - name: Cerrar sesión oVirt
+      ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"

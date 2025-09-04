@@ -1,0 +1,95 @@
+---
+- name: Listado de VMs en oVirt con información de discos
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - .env.ovirt
+  tasks:
+    - name: Autenticar en oVirt
+      ovirt_auth:
+        url: "{{ ovirt_url }}"
+        username: "{{ ovirt_username }}"
+        password: "{{ ovirt_password }}"
+        insecure: "{{ ovirt_insecure }}"
+      register: ovirt_auth
+
+    - name: Obtener información completa de todas las VMs (incluyendo disk_attachments)
+      ovirt_vm_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+        fetch_nested: true
+        nested_attributes:
+          - disk_attachments
+      register: vm_info
+
+    - name: Obtener información de todos los discos del sistema
+      ovirt_disk_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+      register: all_disks_info
+
+    - name: Debug - Mostrar disk_attachments de la primera VM
+      debug:
+        msg: "VM: {{ vm_info.ovirt_vms[0].name }} - disk_attachments: {{ vm_info.ovirt_vms[0].disk_attachments }}"
+      when: vm_info.ovirt_vms | length > 0
+
+    - name: Debug - Mostrar algunos discos del sistema
+      debug:
+        msg: "Total discos en el sistema: {{ all_disks_info.ovirt_disks | length }}"
+
+    - name: Construir tabla de VMs con información de discos
+      set_fact:
+        vm_table: |
+          {{ "%-25s %-10s %-6s %-12s %-8s %-15s %s" | format("Nombre", "Estado", "vCPUs", "Memoria(MB)", "Discos", "Total(GB)", "Nombres Discos") }}
+          {{ "-" * 95 }}
+          {% for vm in vm_info.ovirt_vms -%}
+          {%- set vm_disk_attachments = vm.disk_attachments | default([]) -%}
+          {%- set vm_disks = [] -%}
+          {%- set total_size = 0 -%}
+          {%- for attachment in vm_disk_attachments -%}
+            {%- for disk in all_disks_info.ovirt_disks -%}
+              {%- if disk.id == attachment.id -%}
+                {%- set disk_size_gb = (disk.provisioned_size / 1024 / 1024 / 1024) | round(1) -%}
+                {%- set total_size = total_size + disk_size_gb -%}
+                {%- set _ = vm_disks.append({'name': disk.name, 'size': disk_size_gb}) -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endfor -%}
+          {{ "%-25s %-10s %-6s %-12s %-8s %-15s" | format(
+            vm.name,
+            vm.status,
+            (vm.cpu.topology.sockets * vm.cpu.topology.cores * vm.cpu.topology.threads),
+            (vm.memory / 1024 / 1024) | int,
+            vm_disks | length,
+            total_size | round(1)
+          ) }} {% for disk in vm_disks %}{{ disk.name }}({{ disk.size }}GB){% if not loop.last %}, {% endif %}{% endfor %}
+          {% endfor %}
+
+    - name: Mostrar tabla
+      debug:
+        msg: "{{ vm_table }}"
+
+    - name: Mostrar información detallada de discos por VM
+      debug:
+        msg: |
+          VM: {{ item.name }}
+          Estado: {{ item.status }}
+          Disk Attachments: {{ item.disk_attachments | length }}
+          {% if item.disk_attachments | length > 0 %}
+          Discos:
+          {% for attachment in item.disk_attachments %}
+          {% for disk in all_disks_info.ovirt_disks %}
+          {% if disk.id == attachment.id %}
+          - {{ disk.name }}: {{ (disk.provisioned_size / 1024 / 1024 / 1024) | round(1) }} GB ({{ disk.status | default('N/A') }})
+          {% endif %}
+          {% endfor %}
+          {% endfor %}
+          {% else %}
+          Sin discos attachados
+          {% endif %}
+      loop: "{{ vm_info.ovirt_vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Cerrar sesión oVirt
+      ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
