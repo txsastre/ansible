@@ -1,4 +1,5 @@
 #ansible.cfg
 #k3s/ins-checkmk.yaml
-ceca/
-.DS_Store
+# Ignorar todo
+*
+
