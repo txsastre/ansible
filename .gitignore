@@ -1,5 +1,4 @@
 #ansible.cfg
 #k3s/ins-checkmk.yaml
 # Ignorar todo
-*
-
+# *
