@@ -4,3 +4,4 @@
   tasks:
     - name: Ping hosts
       ansible.builtin.ping:
+        data: "Hello, world!"
