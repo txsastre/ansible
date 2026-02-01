@@ -5,3 +5,4 @@
     - name: Ping hosts
       ansible.builtin.ping:
         data: "Hello, world!"
+        register: ping_result
