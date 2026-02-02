@@ -1,0 +1,249 @@
+---
+- name: Comprobar puertos Oracle con nc
+  hosts: all
+  gather_facts: no
+  vars:
+    scan_x11_tor:
+      - host: exaccx113dstor-scan.ceca.es
+        ports: [1521, 1523]
+      - host: 172.31.97.22
+        ports: [1521, 1523]
+      - host: 172.31.97.23
+        ports: [1521, 1523]
+      - host: 172.31.97.24
+        ports: [1521, 1523]
+
+    vips:
+      - host: exaccx113dstor-1-vip.ceca.es
+        ports: [1521, 1523]
+      - host: 172.31.97.20
+        ports: [1521, 1523]
+      - host: exaccx113dstor-2-vip.ceca.es
+        ports: [1521, 1523]
+      - host: 172.31.97.21
+        ports: [1521, 1523]
+
+    scan_yec:
+      - host: exaccx113dsyec-scan.ceca.es
+        ports: [1521, 1523]
+      - host: 172.31.97.32
+        ports: [1521, 1523]
+      - host: 172.31.97.33
+        ports: [1521, 1523]
+      - host: 172.31.97.31
+        ports: [1521, 1523]
+      - host: exaccx113dsyec-1-vip.ceca.es
+        ports: [1521, 1523]
+      - host: 172.31.97.29
+        ports: [1521, 1523]
+      - host: exaccx113dsyec-2.ceca.es
+        ports: [1521, 1523]
+      - host: 172.31.97.28
+        ports: [1521, 1523]
+      - host: exaccx113dsyec-2-vip.ceca.es
+        ports: [1521, 1523]
+      - host: 172.31.97.30
+        ports: [1521]
+
+  tasks:
+    - name: Comprobar puertos con nc - Scan TOR
+      shell: nc -vz {{ item.0.host }} {{ item.1 }} > /dev/null 2>&1
+      register: resultado_tor
+      failed_when: false
+      changed_when: false
+      no_log: true
+      loop: "{{ scan_x11_tor | subelements('ports') }}"
+      loop_control:
+        label: "{{ item.0.host }}:{{ item.1 }}"
+      tags: tor2
+
+    - name: Agrupar resultados por host inventario - Scan TOR
+      set_fact:
+        tor_grouped: >-
+          {{
+            tor_grouped | default({}) |
+            combine({
+              inventory_hostname: (
+                (tor_grouped[inventory_hostname] | default([])) +
+                [ item.item.0.host ~ ':' ~ item.item.1 ~ ' -> ' ~ ('abierto' if item.rc == 0 else 'cerrado') ]
+              )
+            }, recursive=True)
+          }}
+      loop: "{{ resultado_tor.results }}"
+      no_log: true
+      tags: tor2
+
+    - name: Mostrar resultados agrupados por host inventario - Scan TOR
+      debug:
+        msg: |
+          {{ item.key }}:
+          {% for resultado in item.value %}
+            - {{ resultado }}
+          {% endfor %}
+      loop: "{{ tor_grouped | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      tags: tor2
+
+    - name: Comprobar puertos con nc - VIPs
+      shell: nc -vz {{ item.0.host }} {{ item.1 }} > /dev/null 2>&1
+      register: resultado_vips
+      failed_when: false
+      changed_when: false
+      no_log: true
+      loop: "{{ vips | subelements('ports') }}"
+      loop_control:
+        label: "{{ item.0.host }}:{{ item.1 }}"
+      tags: vips
+
+    - name: Agrupar resultados por host inventario - VIPs
+      set_fact:
+        vips_grouped: >-
+          {{
+            vips_grouped | default({}) |
+            combine({
+              inventory_hostname: (
+                (vips_grouped[inventory_hostname] | default([])) +
+                [ item.item.0.host ~ ':' ~ item.item.1 ~ ' -> ' ~ ('abierto' if item.rc == 0 else 'cerrado') ]
+              )
+            }, recursive=True)
+          }}
+      loop: "{{ resultado_vips.results }}"
+      no_log: true
+      tags: vips
+
+    - name: Mostrar resultados agrupados por host inventario - VIPs
+      debug:
+        msg: |
+          {{ item.key }}:
+          {% for resultado in item.value %}
+            - {{ resultado }}
+          {% endfor %}
+      loop: "{{ vips_grouped | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      tags: vips
+
+    - name: Comprobar puertos con nc - Scan YEC
+      shell: nc -vz {{ item.0.host }} {{ item.1 }} > /dev/null 2>&1
+      register: resultado_yec
+      failed_when: false
+      changed_when: false
+      no_log: true
+      loop: "{{ scan_yec | subelements('ports') }}"
+      loop_control:
+        label: "{{ item.0.host }}:{{ item.1 }}"
+      tags: yec
+
+    - name: Agrupar resultados por host inventario - Scan YEC
+      set_fact:
+        yec_grouped: >-
+          {{
+            yec_grouped | default({}) |
+            combine({
+              inventory_hostname: (
+                (yec_grouped[inventory_hostname] | default([])) +
+                [ item.item.0.host ~ ':' ~ item.item.1 ~ ' -> ' ~ ('abierto' if item.rc == 0 else 'cerrado') ]
+              )
+            }, recursive=True)
+          }}
+      loop: "{{ resultado_yec.results }}"
+      no_log: true
+      tags: yec
+
+    - name: Mostrar resultados agrupados por host inventario - Scan YEC
+      debug:
+        msg: |
+          {{ item.key }}:
+          {% for resultado in item.value %}
+            - {{ resultado }}
+          {% endfor %}
+      loop: "{{ yec_grouped | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      tags: yec
+
+    # --- Aquí empieza la preparación para CSV ---
+
+    - name: Preparar lista resultados TOR para CSV
+      set_fact:
+        tor_csv: >-
+          {{
+            tor_csv | default([]) +
+            [
+              {
+                'tipo': 'TOR',
+                'inventario_host': item,
+                'remoto_host': resultado.split(':')[0],
+                'puerto': resultado.split(':')[1].split(' ')[0],
+                'estado': 'abierto' if 'abierto' in resultado else 'cerrado'
+              }
+              for resultado in (tor_grouped[item] | default([]))
+            ]
+          }}
+      loop: "{{ tor_grouped.keys() }}"
+      run_once: true
+      delegate_to: localhost
+
+    - name: Preparar lista resultados VIP para CSV
+      set_fact:
+        vip_csv: >-
+          {{
+            vip_csv | default([]) +
+            [
+              {
+                'tipo': 'VIP',
+                'inventario_host': item,
+                'remoto_host': resultado.split(':')[0],
+                'puerto': resultado.split(':')[1].split(' ')[0],
+                'estado': 'abierto' if 'abierto' in resultado else 'cerrado'
+              }
+              for resultado in (vips_grouped[item] | default([]))
+            ]
+          }}
+      loop: "{{ vips_grouped.keys() }}"
+      run_once: true
+      delegate_to: localhost
+
+    - name: Preparar lista resultados YEC para CSV
+      set_fact:
+        yec_csv: >-
+          {{
+            yec_csv | default([]) +
+            [
+              {
+                'tipo': 'YEC',
+                'inventario_host': item,
+                'remoto_host': resultado.split(':')[0],
+                'puerto': resultado.split(':')[1].split(' ')[0],
+                'estado': 'abierto' if 'abierto' in resultado else 'cerrado'
+              }
+              for resultado in (yec_grouped[item] | default([]))
+            ]
+          }}
+      loop: "{{ yec_grouped.keys() }}"
+      run_once: true
+      delegate_to: localhost
+
+    - name: Combinar todas las listas para CSV
+      set_fact:
+        combined_results: "{{ (tor_csv | default([])) + (vip_csv | default([])) + (yec_csv | default([])) }}"
+      run_once: true
+      delegate_to: localhost
+
+    - name: Crear contenido CSV con fecha en nombre
+      copy:
+        dest: "/tmp/connectividad{{ ansible_date_time.date }}.csv"
+        content: |
+          tipo,inventario_host,remoto_host,puerto,estado
+          {% for row in combined_results %}
+          {{ row.tipo }},{{ row.inventario_host }},{{ row.remoto_host }},{{ row.puerto }},{{ row.estado }}
+          {% endfor %}
+      run_once: true
+      delegate_to: localhost
+
+    - name: Mostrar ruta del CSV generado
+      debug:
+        msg: "Archivo CSV generado en /tmp/connectividad{{ ansible_date_time.date }}.csv"
+      run_once: true
+      delegate_to: localhost

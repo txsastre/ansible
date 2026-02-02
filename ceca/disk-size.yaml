@@ -1,0 +1,27 @@
+# playbook_disks.yml
+- name: Obtener tamaños de discos físicos
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Ejecutar lsblk y filtrar solo discos
+      shell: lsblk -l -o NAME,SIZE,TYPE | grep disk
+      register: disk_info
+
+    - name: Mostrar información de discos
+      debug:
+        msg: "{{ inventory_hostname }}: {{ disk_info.stdout_lines }}"
+
+    - name: Construir datos CSV
+      set_fact:
+        csv_lines: "{{ disk_info.stdout_lines | map('regex_replace', '^(\\S+)\\s+(\\S+)\\s+disk$', inventory_hostname + ',\\1,\\2') | list }}"
+
+- name: Guardar CSV en archivo
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Consolidar todas las líneas CSV y guardar
+      copy:
+        content: |
+          hostname,disk,size
+          {{ hostvars | dict2items | map(attribute='value.csv_lines') | select('defined') | flatten | join('\n') }}
+        dest: /tmp/disks_info.csv

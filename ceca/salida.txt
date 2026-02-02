@@ -1,0 +1,134 @@
+
+PLAY [Recoger información del sistema] *****************************************
+
+TASK [Ejecutar comandos de diagnóstico] ****************************************
+changed: [acacia1t]
+changed: [desaprocf]
+changed: [rrhhgp]
+changed: [psqlinfini]
+
+TASK [Mostrar salida] **********************************************************
+ok: [acacia1t] => {
+    "system_info.stdout_lines": [
+        "Thu Aug  7 14:03:33 CEST 2025",
+        "acacia1",
+        "VMware-42 34 af f1 35 83 fe 17-8f 1f 51 c9 12 13 07 f0",
+        "   Static hostname: acacia1",
+        "         Icon name: computer-vm",
+        "           Chassis: vm",
+        "        Machine ID: 8483eaa68c28429cb89bd9b97f260123",
+        "           Boot ID: 904fa652d86e44cfae1b5930173e3144",
+        "    Virtualization: vmware",
+        "  Operating System: Red Hat Enterprise Linux 8.8 (Ootpa)",
+        "       CPE OS Name: cpe:/o:redhat:enterprise_linux:8::baseos",
+        "            Kernel: Linux 4.18.0-477.27.1.el8_8.x86_64",
+        "      Architecture: x86-64",
+        "-rw-------. 1 root root 1386 May 21  2020 /root/anaconda-ks.cfg",
+        "    inet 172.27.1.61/16 brd 172.27.255.255 scope global noprefixroute ens192",
+        "Disk /dev/sda: 50 GiB, 53687091200 bytes, 104857600 sectors",
+        "Disk identifier: 3FCE7CCB-EA5B-457E-BD1C-270882597FAB",
+        "Total online memory:     512G",
+        "Architecture:        x86_64",
+        "CPU(s):              80",
+        "Thread(s) per core:  1",
+        "Core(s) per socket:  40",
+        "Socket(s):           2",
+        "Red Hat Enterprise Linux release 8.8 (Ootpa)"
+    ]
+}
+ok: [desaprocf] => {
+    "system_info.stdout_lines": [
+        "Thu Aug  7 14:03:33 CEST 2025",
+        "desaprocf",
+        "VMware-42 0b d0 36 5c 1f 58 98-14 38 c5 14 de ea 62 c4",
+        "   Static hostname: desaprocf",
+        "         Icon name: computer-vm",
+        "           Chassis: vm",
+        "        Machine ID: f94b03d46da34e5194d516bdc261ca86",
+        "           Boot ID: 1d949e752f8c43d18e38bd2d77403790",
+        "    Virtualization: vmware",
+        "  Operating System: Red Hat Enterprise Linux 8.10 (Ootpa)",
+        "       CPE OS Name: cpe:/o:redhat:enterprise_linux:8::baseos",
+        "            Kernel: Linux 4.18.0-553.53.1.el8_10.x86_64",
+        "      Architecture: x86-64",
+        "-rw-------. 1 root root 1733 May 31  2023 /root/anaconda-ks.cfg",
+        "    inet 172.27.11.96/16 brd 172.27.255.255 scope global noprefixroute ens192",
+        "Disk /dev/sda: 80 GiB, 85899345920 bytes, 167772160 sectors",
+        "Disk identifier: 0xeb3b8155",
+        "Total online memory:       4G",
+        "Architecture:        x86_64",
+        "CPU(s):              2",
+        "Thread(s) per core:  1",
+        "Core(s) per socket:  1",
+        "Socket(s):           2",
+        "Red Hat Enterprise Linux release 8.10 (Ootpa)"
+    ]
+}
+ok: [rrhhgp] => {
+    "system_info.stdout_lines": [
+        "Thu Aug  7 14:03:34 CEST 2025",
+        "rrhhgp",
+        "30393137-3436-5a43-4a37-323830584237",
+        "   Static hostname: rrhhgp",
+        "         Icon name: computer-vm",
+        "           Chassis: vm",
+        "        Machine ID: f9773f1a86af354394ae3fecc6edbcc3",
+        "           Boot ID: 712d1850d63543b6b0f4ec03f15c038c",
+        "    Virtualization: kvm",
+        "  Operating System: RHEV",
+        "       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.8:GA:server",
+        "            Kernel: Linux 3.10.0-1127.13.1.el7.x86_64",
+        "      Architecture: x86-64",
+        "-rw-------. 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg",
+        "    inet 172.27.10.81/16 brd 172.27.255.255 scope global eth0",
+        "    inet 192.169.224.1/20 brd 192.169.239.255 scope global br-85692f7d265d",
+        "    inet 192.168.224.1/20 brd 192.168.239.255 scope global br-097d76084220",
+        "    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0",
+        "Disk /dev/vda: 107.4 GB, 107374182400 bytes, 209715200 sectors",
+        "Disk label type: dos",
+        "Disk identifier: 0x0002ffdd",
+        "Total online memory:       4G",
+        "Architecture:          x86_64",
+        "CPU(s):                2",
+        "Thread(s) per core:    1",
+        "Core(s) per socket:    1",
+        "Socket(s):             2",
+        "Model name:            Intel Core Processor (Broadwell)",
+        "Red Hat Enterprise Linux Server release 7.8 (Maipo)"
+    ]
+}
+ok: [psqlinfini] => {
+    "system_info.stdout_lines": [
+        "Thu Aug  7 14:03:34 CEST 2025",
+        "psqlinfini",
+        "VMware-42 0b 9e b9 d5 82 5d 92-7d 64 ad 3d 1a 34 32 e8",
+        "   Static hostname: psqlinfini",
+        "         Icon name: computer-vm",
+        "           Chassis: vm",
+        "        Machine ID: 2e065891e823472b801dec759a13591f",
+        "           Boot ID: 924011732c864cbd8e263d787d18013c",
+        "    Virtualization: vmware",
+        "  Operating System: Red Hat Enterprise Linux 8.10 (Ootpa)",
+        "       CPE OS Name: cpe:/o:redhat:enterprise_linux:8::baseos",
+        "            Kernel: Linux 4.18.0-553.47.1.el8_10.x86_64",
+        "      Architecture: x86-64",
+        "-rw-------. 1 root root 1816 Jun 28  2024 /root/anaconda-ks.cfg",
+        "    inet 172.27.11.77/16 brd 172.27.255.255 scope global noprefixroute ens32",
+        "Disk /dev/sda: 80 GiB, 85899345920 bytes, 167772160 sectors",
+        "Disk identifier: 0x7247a8a5",
+        "Total online memory:       8G",
+        "Architecture:        x86_64",
+        "CPU(s):              2",
+        "Thread(s) per core:  1",
+        "Core(s) per socket:  1",
+        "Socket(s):           2",
+        "Red Hat Enterprise Linux release 8.10 (Ootpa)"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+acacia1t                   : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+desaprocf                  : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+psqlinfini                 : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+rrhhgp                     : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

@@ -1,0 +1,22 @@
+- name: Prueba módulo rhv_host_info
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - redhat.rhel_mgmt.rhv
+  vars:
+    rhv_url: "https://tu_rhvm:443/ovirt-engine/api"
+    rhv_username: "admin@internal"
+    rhv_password: "tu_password"
+    validate_certs: no
+  tasks:
+    - name: Obtener hosts RHV
+      rhv_host_info:
+        url: "{{ rhv_url }}"
+        username: "{{ rhv_username }}"
+        password: "{{ rhv_password }}"
+        validate_certs: "{{ validate_certs }}"
+      register: result
+
+    - debug:
+        var: result
+

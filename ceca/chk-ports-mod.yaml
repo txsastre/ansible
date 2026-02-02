@@ -1,0 +1,56 @@
+- name: Comprobar conectividad a puertos Oracle desde servidores remotos
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Comprobar puerto 1521 en exaccx113dstor-scan.ceca.es
+      shell: "nc -zv -w 3 exaccx113dstor-scan.ceca.es 1521"
+      register: scan_1521
+      ignore_errors: yes
+
+    - name: Comprobar puerto 1523 en exaccx113dstor-scan.ceca.es
+      shell: "nc -zv -w 3 exaccx113dstor-scan.ceca.es 1523"
+      register: scan_1523
+      ignore_errors: yes
+
+    - name: Comprobar puerto 1521 en 172.31.97.22
+      shell: "nc -zv -w 3 172.31.97.22 1521"
+      register: ip22_1521
+      ignore_errors: yes
+
+    - name: Comprobar puerto 1523 en 172.31.97.22
+      shell: "nc -zv -w 3 172.31.97.22 1523"
+      register: ip22_1523
+      ignore_errors: yes
+
+    - name: Comprobar puerto 1521 en 172.31.97.23
+      shell: "nc -zv -w 3 172.31.97.23 1521"
+      register: ip23_1521
+      ignore_errors: yes
+
+    - name: Comprobar puerto 1523 en 172.31.97.23
+      shell: "nc -zv -w 3 172.31.97.23 1523"
+      register: ip23_1523
+      ignore_errors: yes
+
+    - name: Comprobar puerto 1521 en 172.31.97.24
+      shell: "nc -zv -w 3 172.31.97.24 1521"
+      register: ip24_1521
+      ignore_errors: yes
+
+    - name: Comprobar puerto 1523 en 172.31.97.24
+      shell: "nc -zv -w 3 172.31.97.24 1523"
+      register: ip24_1523
+      ignore_errors: yes
+
+    - name: Mostrar resultados
+      debug:
+        msg: |
+          {{ inventory_hostname }}:
+            exaccx113dstor-scan.ceca.es:1521 -> {{ 'OK' if scan_1521.rc == 0 else 'FALLO' }}
+            exaccx113dstor-scan.ceca.es:1523 -> {{ 'OK' if scan_1523.rc == 0 else 'FALLO' }}
+            172.31.97.22:1521 -> {{ 'OK' if ip22_1521.rc == 0 else 'FALLO' }}
+            172.31.97.22:1523 -> {{ 'OK' if ip22_1523.rc == 0 else 'FALLO' }}
+            172.31.97.23:1521 -> {{ 'OK' if ip23_1521.rc == 0 else 'FALLO' }}
+            172.31.97.23:1523 -> {{ 'OK' if ip23_1523.rc == 0 else 'FALLO' }}
+            172.31.97.24:1521 -> {{ 'OK' if ip24_1521.rc == 0 else 'FALLO' }}
+

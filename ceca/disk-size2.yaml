@@ -1,0 +1,38 @@
+- name: Obtener tamaños de discos físicos
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Ejecutar lsblk y filtrar solo discos
+      shell: lsblk -l -o NAME,SIZE,TYPE | grep disk
+      register: disk_info
+
+    - name: Crear lista plana de discos y tamaños
+      set_fact:
+        disk_size_pairs: "{{ disk_info.stdout_lines | map('regex_search', '^(\\S+)\\s+(\\S+)\\s+disk$', '\\1,\\2') | list }}"
+
+    - name: Construir línea CSV para el host
+      set_fact:
+        csv_line: "{{ [inventory_hostname] + (disk_size_pairs | join(',')).split(',') | join(',') }}"
+      # Aquí tomamos el hostname y luego agregamos disco y tamaño alternados
+
+- name: Guardar CSV consolidado en localhost
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Recolectar todas las líneas csv_line de hosts remotos
+      set_fact:
+        all_csv_lines: >-
+          {{
+            hostvars
+            | dict2items
+            | map(attribute='value.csv_line')
+            | select('defined')
+          }}
+
+    - name: Guardar archivo CSV
+      copy:
+        content: |
+          hostname,disk1,size1,disk2,size2,disk3,size3
+          {{ all_csv_lines | join('\n') }}
+        dest: /tmp/disks_info.csv
+

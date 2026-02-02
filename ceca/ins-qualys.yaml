@@ -1,0 +1,75 @@
+---
+- name: Subir e instalar/actualizar Qualys Cloud Agent si es necesario
+  hosts: all
+  become: yes
+  vars:
+    rpm_local_path: /software/qualys-cloud-agent.rpm
+    rpm_remote_path: /var/tmp/qualys-cloud-agent.rpm
+
+  tasks:
+    - name: Subir qualys-cloud-agent.rpm a los servidores
+      copy:
+        src: "{{ rpm_local_path }}"
+        dest: "{{ rpm_remote_path }}"
+        mode: '0644'
+
+    - name: Obtener versión del archivo RPM localmente (controlador)
+      command: rpm -qp --qf "%{VERSION}-%{RELEASE}" {{ rpm_local_path }}
+      delegate_to: localhost
+      run_once: true
+      register: rpm_local_version
+
+    - name: Obtener versión instalada del paquete en servidor remoto (si hay)
+      command: "rpm -q --qf '%{VERSION}-%{RELEASE}' qualys-cloud-agent"
+      register: rpm_installed_version
+      ignore_errors: yes
+
+    - name: Instalar/Actualizar qualys-cloud-agent con rpm si el paquete subido es más nuevo (sin resolver deps)
+      command: rpm -Uvh {{ rpm_remote_path }}
+      when: rpm_installed_version.rc != 0 or rpm_local_version.stdout is version(rpm_installed_version.stdout, '>')
+      register: rpm_install_result
+      # notify: Reiniciar qualys-cloud-agent
+
+    - name: Mostrar estado de instalación y casos posibles
+      debug:
+        msg: >
+          {% if rpm_installed_version.rc != 0 %}
+             Se instaló qualys-cloud-agent porque no estaba presente.
+          {% elif rpm_local_version.stdout is version(rpm_installed_version.stdout, '>') %}
+             Se actualizó qualys-cloud-agent a una versión más reciente ({{ rpm_local_version.stdout }}).
+          {% else %}
+             Ya está instalada la versión más reciente ({{ rpm_installed_version.stdout }}).
+          {% endif %}
+
+    - name: registrar qualys-cloud-agent
+      command: /usr/local/qualys/cloud-agent/bin/qualys-cloud-agent.sh ActivationId=1e02d56c-4971-4665-b19e-e6900ad3e6dd CustomerId=99c99388-da50-4626-bfcf-302414278c56
+#      when: rpm_installed_version.rc != 0 or rpm_local_version.stdout is version(rpm_installed_version.stdout, '>')
+      register: qualys_activation
+      notify: Reiniciar qualys-cloud-agent
+
+    - name: Mostrar registro qualys
+      debug:
+        msg: "Estado registro {{ qualys_activation }}"
+
+
+    - name: Eliminar fichero RPM subido
+      file:
+        path: "{{ rpm_remote_path }}"
+        state: absent
+
+    - name: Set Qualys Cloud Agent HTTPS proxy
+      ansible.builtin.lineinfile:
+        path: /etc/sysconfig/qualys-cloud-agent
+        regexp: '^proxy qualys_https_proxy='
+        line: 'qualys_https_proxy=https://proxy.ceca.es:8080'
+        create: yes
+        backup: yes
+
+  handlers:
+    - name: Reiniciar qualys-cloud-agent
+      systemd:
+        name: qualys-cloud-agent
+        state: restarted
+        enabled: yes
+
+

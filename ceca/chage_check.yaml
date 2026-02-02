@@ -1,0 +1,16 @@
+---
+- name: Comprobar caducidad de contraseña de netreveal_user
+  hosts: all
+  gather_facts: false
+  remote_user: id3265
+  become: true
+
+  tasks:
+    - name: Obtener información de caducidad
+      command: chage -l netreveal_user
+      register: chage_output
+
+    - name: Mostrar caducidad
+      debug:
+        var: chage_output.stdout_lines
+

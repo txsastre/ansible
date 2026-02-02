@@ -1,0 +1,16 @@
+Hostname,HDDs_GB,Memoria_GB,Cores,CPU
+rhv-mgr-ms,59,15,1,4
+rhv-mgr-pci,59,15,1,4
+rhv-mgr-yec,58,15,1,4
+rhvmstor1,367519,1007,2,16
+rhvmsyec1,367519,1007,2,16
+rhvmsyec2,363423,1007,2,16
+rhvtor01,340129,503,2,12
+rhvtor02,340129,503,2,12
+rhvtor03,340129,503,2,16
+rhvyec01,163745,503,2,12
+rhvyec02,163745,503,2,12
+rhvyec03,163745,503,2,12
+rhvyec04,163745,503,2,16
+trepyec,447,30,2,10
+trepalc,447,30,2,10

@@ -1,0 +1,10 @@
+---
+- name: Desactivar caducidad de contraseña para netreveal_user
+  hosts: all
+  remote_user: id3265
+  become: true
+
+  tasks:
+    - name: Desactivar caducidad de la contraseña
+      command: chage -M 99999 -E -1 netreveal_user
+

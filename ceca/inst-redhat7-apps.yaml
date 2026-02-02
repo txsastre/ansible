@@ -1,0 +1,67 @@
+---
+- name: Instalar y verificar paquetes esenciales en RHEL/CentOS/Oracle Linux 8+
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  vars:
+    paquetes_comunes:
+      - openssh-server
+      - redhat-lsb-core
+      - parted
+      - dmidecode
+      - openssh-clients
+      - which
+
+  tasks:
+
+    - name: Instalar paquetes comunes
+      package:
+        name: "{{ paquetes_comunes }}"
+        state: present
+      tags: install
+
+    - name: Instalar libnsl solo en RHEL/CentOS/Oracle Linux 8+
+      when: >
+        ansible_facts['distribution'] in ['RedHat', 'CentOS', 'OracleLinux'] and
+        ansible_facts['distribution_major_version'] | int >= 8
+      package:
+        name: libnsl
+        state: present
+      tags: install
+
+    - name: Verificar paquetes comunes instalados
+      shell: rpm -q {{ item }}
+      register: rpm_check_comunes
+      changed_when: false
+      failed_when: rpm_check_comunes.rc != 0
+      loop: "{{ paquetes_comunes }}"
+      tags: check
+
+
+    - name: Mostrar resultados de verificación de paquetes comunes (formato limpio)
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ rpm_check_comunes.results | map(attribute='stdout') | list }}"
+      tags: check
+
+    - name: Verificar libnsl solo en RHEL/CentOS/Oracle Linux 8+
+      when: >
+        ansible_facts['distribution'] in ['RedHat', 'CentOS', 'OracleLinux'] and
+        ansible_facts['distribution_major_version'] | int >= 8
+      shell: rpm -q libnsl
+      register: rpm_check_libnsl
+      changed_when: false
+      failed_when: rpm_check_libnsl.rc != 0
+      tags: check
+
+    - name: Mostrar resultado de verificación de libnsl
+      when: >
+        rpm_check_libnsl is defined and
+        'stdout' in rpm_check_libnsl and
+        ansible_facts['distribution'] in ['RedHat', 'CentOS', 'OracleLinux'] and
+        ansible_facts['distribution_major_version'] | int >= 8
+      debug:
+        msg: "{{ rpm_check_libnsl.stdout }}"
+      tags: check
+

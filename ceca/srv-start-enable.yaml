@@ -1,0 +1,36 @@
+- name: Habilitar e iniciar el servicio qualys-cloud-agent
+  hosts: all
+  tasks:
+    - name: Comprobar estado del servicio
+      ansible.builtin.systemd:
+        name: qualys-cloud-agent
+      register: resultado_servicio
+      ignore_errors: true
+
+    - name: Habilitar el servicio si está instalado
+      ansible.builtin.systemd:
+        name: qualys-cloud-agent
+        enabled: true
+      when: resultado_servicio.status.LoadState is defined and resultado_servicio.status.LoadState == "loaded"
+
+    - name: Iniciar el servicio si está instalado
+      ansible.builtin.systemd:
+        name: qualys-cloud-agent
+        state: started
+      when: resultado_servicio.status.LoadState is defined and resultado_servicio.status.LoadState == "loaded"
+
+    - name: Insertar línea en /etc/sysconfig/qualys-cloud-agent
+      ansible.builtin.lineinfile:
+        path: /etc/sysconfig/qualys-cloud-agent
+        line: 'qualys_https_proxy'
+        state: absent
+      become: true
+
+    - name: Insertar línea en /etc/sysconfig/qualys-cloud-agent
+      ansible.builtin.lineinfile:
+        path: /etc/sysconfig/qualys-cloud-agent
+        line: 'qualys_https_proxy=https://proxy.ceca.es:8080'
+        state: present
+        create: yes
+      become: true
+

@@ -1,0 +1,81 @@
+---
+- name: Creación de VGs y LVs para ctmagent
+  hosts: all
+  become: true
+  vars:
+    vg_name: "vg_{{ equipo }}"  # Define el VG basado en variable 'equipo'
+
+  tasks:
+
+    - name: Verificar si existe el VG
+      ansible.builtin.command: vgdisplay {{ vg_name }}
+      register: vg_check
+      failed_when: false
+      changed_when: false
+
+    - name: Obtener información de los VGs
+      ansible.builtin.command: vgs --units g --noheadings --separator "," -o vg_name,vg_free
+      register: resultado_vgs
+
+    - name: Crear Logical Volume para sysout (1GB)
+      when: vg_check.rc == 0
+      ansible.builtin.command: >
+        lvcreate -L 1G -n lv_ctm_sysout {{ vg_name }}
+      args:
+        creates: "/dev/{{ vg_name }}/lv_ctm_sysout"
+
+    - name: Crear Logical Volume para /ctmagent (4GB)
+      when: vg_check.rc == 0
+      ansible.builtin.command: >
+        lvcreate -L 4G -n lv_ctmagent {{ vg_name }}
+      args:
+        creates: "/dev/{{ vg_name }}/lv_ctmagent"
+
+    - name: Crear sistema de archivos ext4 para lv_ctm_sysout
+      when: vg_check.rc == 0
+      community.general.filesystem:
+        fstype: ext4
+        dev: "/dev/{{ vg_name }}/lv_ctm_sysout"
+
+    - name: Crear sistema de archivos ext4 para lv_ctmagent
+      when: vg_check.rc == 0
+      community.general.filesystem:
+        fstype: ext4
+        dev: "/dev/{{ vg_name }}/lv_ctmagent"
+
+    - name: Crear directorios de montaje
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: ctmagent
+        group: ctmagent
+        mode: '0755'
+      loop:
+        - /ctmagent
+        - /ctmagent/ctm/sysout
+
+    - name: Montar lv_ctm_sysout
+      ansible.builtin.mount:
+        path: /ctmagent/ctm/sysout
+        src: "/dev/{{ vg_name }}/lv_ctm_sysout"
+        fstype: ext4
+        state: mounted
+
+    - name: Montar lv_ctmagent
+      ansible.builtin.mount:
+        path: /ctmagent
+        src: "/dev/{{ vg_name }}/lv_ctmagent"
+        fstype: ext4
+        state: mounted
+
+    - name: Asegurarse de que el usuario ctmagent existe
+      ansible.builtin.user:
+        name: ctmagent
+        home: /ctmagent
+        state: present
+
+    - name: Asegurarse de que la librería libnsl esté instalada
+      ansible.builtin.package:
+        name: libnsl
+        state: present
+

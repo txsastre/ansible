@@ -1,0 +1,28 @@
+- name: Obtener fecha actual del sistema
+  ansible.builtin.command: date '+%Y-%m-%d %H:%M:%S'
+  register: system_date
+
+- name: Obtener versión del kernel
+  ansible.builtin.command: uname -r
+  register: kernel_version
+
+- name: Obtener versión del sistema operativo
+  ansible.builtin.slurp:
+    src: /etc/os-release
+  register: os_release_raw
+
+- name: Decodificar contenido de /etc/os-release
+  set_fact:
+    os_release_content: "{{ os_release_raw.content | b64decode }}"
+
+- name: Extraer nombre y versión del SO
+  set_fact:
+    os_name: "{{ (os_release_content | regex_search('^NAME=\"?([^\"]+)\"?', '\\1', multiline=True)) }}"
+    os_version: "{{ (os_release_content | regex_search('^VERSION=\"?([^\"]+)\"?', '\\1', multiline=True)) }}"
+
+- name: Mostrar fecha, kernel y versión del SO
+  debug:
+    msg: |
+      Fecha: {{ system_date.stdout }}
+      Kernel: {{ kernel_version.stdout }}
+      Sistema Operativo: {{ os_name }} {{ os_version }}

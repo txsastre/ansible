@@ -1,0 +1,24 @@
+---
+- name: Instalación de prerrequisitos
+  hosts: all
+  become: yes
+  tasks:
+    - name: Instalar paquetes comunes
+      package:
+        name:
+          - openssh-server   # sshd en la mayoría de distros
+          - lsb-release     # lsb puede variar, lsb-release es común
+          - parted
+          - dmidecode
+          - openssh-clients # para scp
+          - which
+        state: present
+
+    - name: Instalar libnsl solo en RHEL/OracleLinux/CentOS 8+ 
+      package:
+        name: libnsl
+        state: present
+      when: 
+        - ansible_distribution in ['RedHat', 'OracleLinux', 'CentOS']
+        - ansible_distribution_major_version | int >= 8
+

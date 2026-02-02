@@ -1,0 +1,32 @@
+---
+- name: Obtener versión del agente Qualys Cloud
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Verificar si el paquete Qualys está instalado
+      shell: rpm -qa | grep qualys-cloud-agent
+      register: qualys_rpm
+      ignore_errors: yes
+
+    - name: Mostrar versión desde RPM
+      debug:
+        msg: "Versión instalada desde RPM: {{ qualys_rpm.stdout }}"
+      when: qualys_rpm.stdout != ""
+
+    - name: Verificar archivo de versión
+      stat:
+        path: /usr/local/qualys/cloud-agent/version.txt
+      register: version_file
+
+    - name: Leer archivo de versión
+      slurp:
+        path: /usr/local/qualys/cloud-agent/version.txt
+      register: version_content
+      when: version_file.stat.exists
+
+    - name: Mostrar versión desde archivo
+      debug:
+        msg: "Versión desde archivo: {{ version_content.content | b64decode }}"
+      when: version_file.stat.exists
+

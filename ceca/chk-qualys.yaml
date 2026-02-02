@@ -1,0 +1,107 @@
+- name: Verificar si el servicio existe y obtener su estado
+  hosts: all
+  become: true
+  vars:
+    nombre_del_servicio: qualys-cloud-agent
+
+  tasks:
+    - name: Comprobar estado del servicio
+      ansible.builtin.systemd:
+        name: "{{ nombre_del_servicio }}"
+      register: resultado_servicio
+      ignore_errors: true
+
+    - name: Mostrar estado si el servicio existe
+      debug:
+        msg: >
+          El servicio '{{ nombre_del_servicio }}' tiene los siguientes estados:
+          LoadState={{ resultado_servicio.status.LoadState }},
+          ActiveState={{ resultado_servicio.status.ActiveState }},
+          SubState={{ resultado_servicio.status.SubState }},
+          UnitFileState={{ resultado_servicio.status.UnitFileState | default('no disponible') }}
+      when: resultado_servicio is defined and resultado_servicio.status is defined
+
+    - name: Indicar si el servicio está ejecutándose
+      debug:
+        msg: >
+          El servicio '{{ nombre_del_servicio }}' está EJECUTÁNDOSE.
+      when: resultado_servicio.status.ActiveState == "active"
+
+    - name: Indicar si el servicio NO está ejecutándose
+      debug:
+        msg: >
+          El servicio '{{ nombre_del_servicio }}' NO está ejecutándose. Estado actual: {{ resultado_servicio.status.ActiveState }}
+      when: resultado_servicio.status is defined and resultado_servicio.status.ActiveState != "active"
+
+    - name: Mostrar mensaje si el servicio no existe o fallo al obtener estado
+      debug:
+        msg: "El servicio no existe o no se pudo obtener su estado."
+      when: resultado_servicio is failed or resultado_servicio.status is not defined
+
+    - name: Mostrar contenido de /etc/sysconfig/qualys-cloud-agent
+      ansible.builtin.shell: cat /etc/sysconfig/qualys-cloud-agent
+      register: qualys_content
+      become: yes
+
+    - name: Mostrar salida del archivo  /etc/sysconfig/qualys-cloud-agent
+      ansible.builtin.debug:
+        msg: "{{ qualys_content.stdout }}"
+
+    # curl -v --connect-timeout 10 telnet://proxy.ceca.es:8080
+    - name: Esperar a que el proxy acepte conexión TCP en puerto 8080
+      wait_for:
+        host: proxy.ceca.es
+        port: 8080
+        timeout: 10
+      register: proxy_check
+      ignore_errors: yes
+      tags: proxy
+
+    - name: Mostrar mensaje de estado de conexión
+      debug:
+        msg: "OK - Conexión TCP al proxy OK en {{ inventory_hostname }}"
+      when: proxy_check.failed is not defined or not proxy_check.failed
+      tags: proxy
+
+    - name: Mostrar mensaje de fallo
+      debug:
+        msg: "ERROR - Fallo de conexión TCP al proxy desde {{ inventory_hostname }}"
+      when: proxy_check.failed is defined and proxy_check.failed
+      tags: proxy
+
+    - name: Obtener información del archivo
+      stat:
+        path: /etc/sysconfig/qualys-cloud-agent
+      register: archivo_info
+      tags: file
+
+    - name: Mostrar permisos y propietario
+      debug:
+        msg: >
+          El archivo tiene permisos {{ archivo_info.stat.mode }},
+          es propiedad de {{ archivo_info.stat.pw_name }}:{{ archivo_info.stat.gr_name }}
+      tags: file
+
+    - name: Asegurar que el archivo tenga permisos 0600 y sea propiedad de root
+      ansible.builtin.file:
+        path: /etc/sysconfig/qualys-cloud-agent
+        owner: root
+        group: root
+        mode: '0600'
+        state: file
+      when: archivo_info.stat.exists
+#      tags: file
+
+    - name: Comprobar si el log existe
+      stat:
+        path: /var/log/qualys/qualys-cloud-agent.log
+      register: qualys_log
+      tags: log
+
+    - name: Copiar el log localmente si existe
+      fetch:
+        src: /var/log/qualys/qualys-cloud-agent.log
+        dest: "./logs/{{ inventory_hostname }}-qualys-cloud-agent.log"
+        flat: yes
+      when: qualys_log.stat.exists
+      tags: log

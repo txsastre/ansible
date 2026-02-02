@@ -1,0 +1,82 @@
+---
+- name: Crear usuarios desde CSV y agregar a AllowUsers (en host remoto)
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    ruta_csv_local: "/home/id3265/usuarios-fake.csv"
+    password_temporal: "Temporal.1234567"
+
+  tasks:
+
+    - name: Leer CSV desde localhost
+      community.general.read_csv:
+        path: "{{ ruta_csv_local }}"
+      register: csv_data
+      delegate_to: localhost
+      run_once: true
+      tags: always
+
+    - name: Verificar estructura de datos
+      debug:
+        var: csv_data.list
+      run_once: true
+      tags: always
+
+    - name: Crear usuarios en host remoto
+      user:
+        name: "{{ item.id }}"
+        comment: "ES/C/000000/CECA/({{ item.nombre }}) - ({{ item.email }})"
+        password: "{{ password_temporal | password_hash('sha512') }}"
+        update_password: on_create
+        shell: /bin/bash
+        state: present
+      loop: "{{ csv_data.list }}"
+
+    - name: Configurar políticas de contraseña
+      command: chage -M 90 -E -1 {{ item.id }}
+      loop: "{{ csv_data.list }}"
+
+    - name: Forzar cambio de contraseña al primer login
+      command: passwd --expire {{ item.id }}
+      loop: "{{ csv_data.list }}"
+
+    # ====== SECCIÓN: AllowUsers ======
+
+    - name: Obtener línea AllowUsers actual
+      shell: "grep '^AllowUsers' /home/id3265/sshd_config || echo 'AllowUsers'"
+      register: allowusers_line
+      changed_when: false
+      tags: allowusers
+
+    - name: Extraer usuarios existentes de AllowUsers
+      set_fact:
+        usuarios_existentes: "{{ allowusers_line.stdout.split()[1:] if allowusers_line.stdout.startswith('AllowUsers') else [] }}"
+      tags: allowusers
+
+    - name: Extraer usuarios nuevos del CSV
+      set_fact:
+        usuarios_nuevos: "{{ csv_data.list | map(attribute='id') | list }}"
+      tags: allowusers
+
+    - name: Calcular lista combinada de usuarios AllowUsers. Evita duplicados por id
+      set_fact:
+        usuarios_combinados: "{{ (usuarios_existentes + usuarios_nuevos) | unique | sort }}"
+      tags: allowusers
+
+    - name: Actualizar línea AllowUsers sin borrar usuarios existentes
+      lineinfile:
+        path: /home/id3265/sshd_config
+        regexp: '^AllowUsers'
+        line: "AllowUsers {{ usuarios_combinados | join(' ') }}"
+        create: yes
+#      notify: Reiniciar sshd
+      tags: allowusers
+
+  handlers:
+    - name: Reiniciar sshd
+      service:
+        name: sshd
+        state: restarted
+

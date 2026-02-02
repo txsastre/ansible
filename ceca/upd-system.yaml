@@ -1,0 +1,60 @@
+---
+- name: Actualización completa del sistema
+  hosts: all
+  become: true
+  gather_facts: no
+
+  vars:
+    max_retries: 3
+    retry_delay: 10
+
+  tasks:
+
+    - name: Mostrar versión actual del kernel y fecha
+      ansible.builtin.shell: |
+        echo "Kernel: $(uname -r)"
+        echo "Fecha: $(date)"
+        echo "SO : $(cat /etc/os-release)"
+      register: sys_info
+      changed_when: false
+      tags: update
+
+    - name: Mostrar info del sistema antes de actualizar
+      debug:
+        msg: "{{ sys_info.stdout_lines }}"
+      tags: update
+
+    - name: Actualizar todos los paquetes instalados
+      ansible.builtin.dnf:
+        name: '*'
+        state: latest
+      register: update_result
+      retries: "{{ max_retries }}"
+      delay: "{{ retry_delay }}"
+      until: update_result is succeeded
+      tags: update
+
+    - name: Mostrar resumen actualización
+      debug:
+        msg: >
+          Paquetes actualizados: {{ update_result.changed | default(false) }}
+          {{ update_result.msg if update_result.msg is defined else '' }}
+      tags: update
+
+    - name: Mostrar mensaje final bonito (una sola vez)
+      ansible.builtin.debug:
+        msg: |
+          * Actualización completada.
+          - Revisa posibles mensajes de error.
+          - Si todo ok - ejecutar tareas post.
+      run_once: true
+      tags: update
+
+    # solo reinciiara si desde cli pasamos variable -e "reboot_vm=true"
+    - name: Reiniciar el equipo si reboot_vm es true
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+      when: reboot_vm | default(false) | bool
+      tags: reboot
+
+    # ansible vm1,vm2 -i inv/misvm.ini -m ansible.builtin.reboot

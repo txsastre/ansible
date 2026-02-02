@@ -1,0 +1,308 @@
+---
+- name : Comprobacion antes parcheo
+  hosts: all
+  become: true
+  gather_facts: true
+  gather_subset: 
+    - min
+  vars:
+#    repo_unico: "kyndryl.repo"
+    ruta_evidencias_local: "{{ lookup('env', 'HOME') }}/evidencias"
+    min_free_mb: 1024
+  tasks:
+
+    - name: Comprobar si el repo {{ repo_unico }} está habilitado.
+      shell: grep -r "enabled=1" /etc/yum.repos.d/ | grep -E "kyndryl.*\.repo" || true
+    #  shell: grep -r "enabled=1" /etc/yum.repos.d/ | grep -vE "kyndryl.*\.repo" || true
+      register: repo_valido
+      changed_when: false
+      failed_when: repo_valido.stdout == ""
+      tags: repo
+
+#==========================================
+    - name: Obtener VGs desde GRUB
+      shell: |
+        grep -o 'rd\.lvm\.lv=[^ ]*' /etc/default/grub | cut -d= -f2 | cut -d/ -f1 | sort -u
+      register: grub_vgs
+      changed_when: false
+      tags: grub-vgs
+
+    - name: mostrar nombre VGS en GRUB
+      debug:
+        msg: "Grub contiene {{ grub_vgs.stdout_lines }}"
+      tags: grub-vgs
+
+    - name: Obtener VGs reales del sistema
+      shell: |
+        vgs --noheadings -o vg_name | awk '{$1=$1};1' | sort -u
+      register: system_vgs
+      changed_when: false
+      tags: grub-vgs
+
+    - name: Crear lista de VGs encontrados en sistema que están en GRUB
+      set_fact:
+        matched_vgs: "{{ matched_vgs | default([]) + [ item ] }}"
+      loop: "{{ grub_vgs.stdout_lines }}"
+      when: item in system_vgs.stdout_lines
+      tags: grub-vgs
+
+    - name: Mostrar VGs encontrados (OK)
+      debug:
+        msg: |
+          OK - Los siguientes VGs declarados en GRUB están presentes en el sistema:
+          {{ matched_vgs | join('\n') }}
+      when: matched_vgs is defined and matched_vgs | length > 0
+      tags: grub-vgs
+
+    - name: Abortamos si no hay VG coincidente
+      fail:
+        msg: |
+          ERROR : Ningún VG declarado en GRUB está presente en el sistema.
+          En muchas máquinas el VG del sistema no es el correcto y tenemos que modificarlo,
+          en ese caso creamos una copia de /etc/default/grub :  cp /etc/default/grub /etc/default/grub.bk
+          y modificamos el VG al correcto.
+          (Si hemos modificado el fichero, es recomendable ejecutar
+          grub2-mkconfig -o /boot/grub2/grub.cfg)
+      when: matched_vgs is not defined or matched_vgs | length == 0
+      tags: grub-vgs
+
+
+#=============================
+    - name: Verificar la sintaxis de /etc/fstab
+      shell: findmnt --verify
+      register: fstab_check
+      changed_when: false
+      failed_when: fstab_check.rc != 0
+      tags: fstab-check
+
+    - name: Mostrar resultado de la verificación de /etc/fstab
+      debug:
+        msg: "{{ fstab_check.stdout }}"
+      tags: fstab-check
+
+    - name: Montar todos los sistemas de archivos definidos en /etc/fstab
+      shell: mount -a
+      register: mount_all
+      changed_when: false
+      failed_when: mount_all.rc != 0
+      tags: fstab-check
+
+    - name: Mostrar resultado del comando mount -a
+      debug:
+        msg: "{{ mount_all.stdout }}"
+      tags: fstab-check
+
+#===================================
+
+
+    - name: Obtener espacio libre en /var
+      shell: df --output=avail /var | tail -n1
+      register: var_space
+      changed_when: false
+      tags: free-space
+
+    - name: Obtener espacio libre en /usr
+      shell: df --output=avail /usr | tail -n1
+      register: usr_space
+      changed_when: false
+      tags: free-space
+
+    - name: Convertir espacio libre a MB
+      set_fact:
+        var_space_mb: "{{ var_space.stdout | trim | int // 1024 | int }}"
+        usr_space_mb: "{{ usr_space.stdout | trim | int // 1024 | int }}"
+      tags: free-space
+
+    - name: Mostrar espacio libre
+      debug:
+        msg:
+          - "/var libre: {{ var_space_mb }} MB"
+          - "/usr libre: {{ usr_space_mb }} MB"
+      tags: free-space
+
+    - name: Fallar si /var o /usr tienen menos de {{ min_free_mb }} MB libres
+      fail:
+        msg: >
+          Espacio insuficiente detectado:
+          {% if (var_space_mb | int) < min_free_mb %}/var ({{ var_space_mb }} MB) {% endif %}
+          {% if (usr_space_mb | int) < min_free_mb %}/usr ({{ usr_space_mb }} MB){% endif %}
+      when: (var_space_mb | int) < min_free_mb or (usr_space_mb | int) < min_free_mb
+      tags: free-space
+
+#====================   evidencias =============================
+    - name: Obtener el nombre de usuario del HOME local (controlador)
+      set_fact:
+        local_user: "{{ lookup('env', 'HOME').split('/')[-1] }}"
+      tags: evidencias
+
+    - name: local user name
+      debug:
+        msg : "{{ local_user }}"
+      tags: evidencias
+
+    - name: Obtener hostname real del sistema remoto
+      ansible.builtin.command: hostname
+      register: remote_hostname
+      tags: evidencias
+
+    - name: Borrar directorio remoto para limpieza previa
+      ansible.builtin.file:
+        path: "/home/{{ local_user }}/{{ remote_hostname.stdout }}"
+        state: absent
+      tags: evidencias
+
+    - name: Crear directorio en /home/$LOCALUSER/$HOSTNAME en el host remoto
+      ansible.builtin.file:
+        path: "/home/{{ local_user }}/{{ remote_hostname.stdout }}"
+        state: directory
+        mode: '0755'
+      tags: evidencias
+
+    - name: Mostrar debug con la ruta remota
+      debug:
+        msg: "Ruta remota: /home/{{ local_user }}/{{ remote_hostname.stdout }}"
+      tags: evidencias
+
+    - name: Ejecutar comandos y guardar salidas en el host remoto
+      ansible.builtin.shell: |
+        mkdir -p "/home/{{ local_user }}/{{ remote_hostname.stdout }}"
+        date > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/date.txt"
+        yum list updates > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/yum_list-updates_before.txt"
+        uname -r > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/kernel_before.txt"
+        modinfo zfs > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/modinfo_zfs_before.txt"
+        ip a > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/ip_a_before.txt"
+        ip route > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/ip_route_before.txt"
+        cat /proc/mounts > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/proc_mount_before.txt"
+        df -h --output=source,fstype,size,target | egrep -v 'tmpfs|Filesystem' | sort > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/df_h_before.txt"
+        systemctl --type=service --state=active | grep running | sort > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/systemctl_before.txt"
+        alternatives --display java > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/java_before.txt"
+        cp /etc/pki/ca-trust/extracted/java/cacerts "/home/{{ local_user }}/{{ remote_hostname.stdout }}/"
+        cp /etc/fstab "/home/{{ local_user }}/{{ remote_hostname.stdout }}/"
+        cp /etc/default/grub "/home/{{ local_user }}/{{ remote_hostname.stdout }}/"
+      args:
+        executable: /bin/bash
+      tags: evidencias
+
+#====================   JAVA evidencias =============================
+    - name: Verificar si existe la ruta Java específica
+      stat:
+        path: /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.261-2.6.22.2.el7_8.x86_64/jre/lib/ext/
+      register: java_path
+      tags:
+        - evidencias
+        - java
+
+    - name: Crear carpeta de destino en el controlador si no existe
+      local_action:
+        module: file
+        path: "{{ ruta_evidencias_local }}/{{ inventory_hostname }}/"
+        state: directory
+        mode: '0755'
+      when: java_path.stat.exists
+      tags:
+        - evidencias
+        - java
+
+    - name: Traer bcmail*.jar desde remoto hacia controlador
+      fetch:
+        src: "/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.261-2.6.22.2.el7_8.x86_64/jre/lib/ext/bcmail*.jar"
+        dest: "{{ ruta_evidencias_local }}/{{ inventory_hostname }}/"
+        flat: yes
+      when: java_path.stat.exists
+      ignore_errors: yes
+      tags:
+        - evidencias
+        - java
+
+    - name: Traer bcprov*.jar desde remoto hacia controlador
+      fetch:
+        src: "/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.261-2.6.22.2.el7_8.x86_64/jre/lib/ext/bcprov*.jar"
+        dest: "{{ ruta_evidencias_local }}/{{ inventory_hostname }}/"
+        flat: yes
+      when: java_path.stat.exists
+      ignore_errors: yes
+      tags:
+        - evidencias
+        - java
+
+    - name: Traer SFProv*.jar desde remoto hacia controlador
+      fetch:
+        src: "/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.261-2.6.22.2.el7_8.x86_64/jre/lib/ext/SFProv*.jar"
+        dest: "{{ ruta_evidencias_local }}/{{ inventory_hostname }}/"
+        flat: yes
+      when: java_path.stat.exists
+      ignore_errors: yes
+      tags:
+        - evidencias
+        - java
+
+#====================  PRE-Patch =============================
+    - name: Obtener el nombre de usuario del HOME local (controlador)
+      set_fact:
+        local_user: "{{ lookup('env', 'HOME').split('/')[-1] }}"
+      tags: evidencias
+
+    - name: Obtener hostname real del sistema remoto
+      ansible.builtin.command: hostname
+      register: remote_hostname
+      tags: evidencias
+
+    - name: Crear directorio en /home/$LOCALUSER/$HOSTNAME en el host remoto (pre-patch)
+      ansible.builtin.file:
+        path: "/home/{{ local_user }}/{{ remote_hostname.stdout }}"
+        state: directory
+        mode: '0755'
+      tags: evidencias
+
+    - name: Ejecutar comandos y guardar salidas pre-patch en el host remoto
+      ansible.builtin.shell: |
+        mkdir -p "/home/{{ local_user }}/{{ remote_hostname.stdout }}"
+        uname -r > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/kernel_after"
+        ip a > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/ip_a_after"
+        ip route > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/ip_route_after"
+        modinfo zfs > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/modinfo_zfs_after"
+        cat /proc/mounts > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/proc_mount_after"
+        df -h --output=source,fstype,size,target | egrep -v 'tmpfs|Filesystem' | sort > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/df_h_after"
+        systemctl --type=service --state=active | grep running | sort > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/systemctl_after"
+        alternatives --display java > "/home/{{ local_user }}/{{ remote_hostname.stdout }}/java_after"
+      args:
+        executable: /bin/bash
+      tags: evidencias
+
+    - name: Mostrar debug con la ruta remota pre-patch
+      debug:
+        msg: "Pre-patch archivos guardados en /home/{{ local_user }}/{{ remote_hostname.stdout }}"
+      tags: evidencias
+
+#==================== VERSION-KERNELS ACTUAL - crear en role o include-task  =============================
+
+    - name: Ejecutar tareas de get_sysinfo - Kernel y SO version.
+      include_tasks: get_sysinfo.yaml
+
+
+#========================================
+
+    - name: Descargar paquetes para instalar. NO instalamos. dnf -y upgrade --downloadonly
+      ansible.builtin.command: dnf -y upgrade --downloadonly
+      register: resultado_descarga
+      tags: download
+
+    - name: Mostrar salida del comando
+      ansible.builtin.debug:
+        var: resultado_descarga.stdout_lines
+      tags: download
+#========================================
+
+
+    - name: RECORDATORIO
+      debug:
+        msg: |
+          📌 Recordatorio final del playbook:
+          - Hacer snapshot sin RAM
+          - Mandar correo : 'José Menéndez González' <jmenengo@cecabank.es>; 'Francisco Gabriel Serrano Marqués' <fsermar@cecabank.es>, 
+          - CECA unix <CECAunix@kyndryl.com>; Gestion Cecabank <DG-GestionCecabank@kyndryl.com>; Cecabank - Gestión_OLD <Cecabank-Gestin@kyndryl.onmicrosoft.com> ,
+          - cgr@cecabank.es y los correos que se indican  en el excel de parcheo 
+          - Comprueba que todos los servicios están funcionando
+          - Ejecuta ahora --->  ansible-playbook ... upd-system.yaml
+      run_once: true
+      tags: evidencias

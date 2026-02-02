@@ -1,0 +1,20 @@
+---
+- name: Playbook para mostrar información legible del sistema
+  hosts: all
+  gather_facts: yes
+
+  tasks:
+    - name: Mostrar IP principal del host
+      debug:
+        msg: "El host {{ inventory_hostname }} tiene como IP principal: {{ ansible_default_ipv4.address }}"
+
+    - name: Mostrar sistema operativo
+      debug:
+        msg: "El sistema operativo de {{ inventory_hostname }} es {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+    - name: Mostrar cantidad de memoria RAM
+      debug:
+        msg: "El host {{ inventory_hostname }} tiene {{ ansible_memtotal_mb }} MB de RAM"
+
+    - name: Mostrar número de CPUs
+      debug:

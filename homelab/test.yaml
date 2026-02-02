@@ -1,0 +1,28 @@
+---
+- name: Empaquetar y traer anaconda
+  hosts: all
+  become: true
+  vars:
+  remote_anaconda_path: /var/log/anaconda
+
+  tasks:
+  - name: Crear tar en remoto
+    archive:
+    path: "{{ remote_anaconda_path }}"
+    dest: "/tmp/anaconda-{{ inventory_hostname }}.tar.gz"
+    format: gz
+
+  - name: Crear dir local en controlador
+    delegate_to: localhost
+    run_once: true
+    become: false
+    file:
+    path: "{{ lookup('env','HOME') }}/anaconda"
+    state: directory
+    mode: '0755'
+
+  - name: Traer tar al controlador
+    fetch:
+    src: "/tmp/anaconda-{{ inventory_hostname }}.tar.gz"
+    dest: "{{ lookup('env','HOME') }}/anaconda/"
+    flat: yes

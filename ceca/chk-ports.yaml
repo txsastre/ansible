@@ -1,0 +1,80 @@
+---
+- name: Comprobar puertos Oracle con nc
+  hosts: all
+  gather_facts: no
+  vars:
+    scan_x11_tor:
+      - { host: "exaccx113dstor-scan.ceca.es", ports: [1521, 1523] }
+      - { host: "172.31.97.22", ports: [1521, 1523] }
+      - { host: "172.31.97.23", ports: [1521, 1523] }
+      - { host: "172.31.97.24", ports: [1521, 1523] }
+
+    vips:
+      - { host: "exaccx113dstor-1-vip.ceca.es", ports: [1521, 1523] }
+      - { host: "172.31.97.20", ports: [1521, 1523] }
+      - { host: "exaccx113dstor-2-vip.ceca.es", ports: [1521, 1523] }
+      - { host: "172.31.97.21", ports: [1521, 1523] }
+
+    scan_yec:
+      - { host: "exaccx113dsyec-scan.ceca.es", ports: [1521, 1523] }
+      - { host: "172.31.97.32", ports: [1521, 1523] }
+      - { host: "172.31.97.33", ports: [1521, 1523] }
+      - { host: "172.31.97.31", ports: [1521, 1523] }
+      - { host: "exaccx113dsyec-1-vip.ceca.es", ports: [1521, 1523] }
+      - { host: "172.31.97.29", ports: [1521, 1523] }
+      - { host: "exaccx113dsyec-2.ceca.es", ports: [1521, 1523] }
+      - { host: "172.31.97.28", ports: [1521, 1523] }
+      - { host: "exaccx113dsyec-2-vip.ceca.es", ports: [1521, 1523] }
+      - { host: "172.31.97.30", ports: [1521] }
+
+  tasks:
+    - name: Comprobar puertos con nc - Scan X11-TOR
+      shell: "nc -vz {{ item[0].host }} {{ item[1] }}"
+      register: resultado
+      failed_when: false
+      loop: "{{ scan_x11_tor | subelements('ports') }}"
+      loop_control:
+        label: "{{ item[0].host }}:{{ item[1] }}"
+
+    - name: Mostrar resultados - Scan X11-TOR
+      debug:
+        msg: |
+          Host {{ item.item[0].host }} puerto {{ item.item[1] }}:
+          rc={{ item.rc }}
+          stdout={{ item.stdout }}
+          stderr={{ item.stderr }}
+      loop: "{{ resultado.results }}"
+
+    - name: Comprobar puertos con nc - Vips
+      shell: "nc -vz {{ item[0].host }} {{ item[1] }}"
+      register: resultado_vips
+      failed_when: false
+      loop: "{{ vips | subelements('ports') }}"
+      loop_control:
+        label: "{{ item[0].host }}:{{ item[1] }}"
+
+    - name: Mostrar resultados - Vips
+      debug:
+        msg: |
+          Host {{ item.item[0].host }} puerto {{ item.item[1] }}:
+          rc={{ item.rc }}
+          stdout={{ item.stdout }}
+          stderr={{ item.stderr }}
+      loop: "{{ resultado_vips.results }}"
+
+    - name: Comprobar puertos con nc - Scan YEC
+      shell: "nc -vz {{ item[0].host }} {{ item[1] }}"
+      register: resultado_yec
+      failed_when: false
+      loop: "{{ scan_yec | subelements('ports') }}"
+      loop_control:
+        label: "{{ item[0].host }}:{{ item[1] }}"
+
+    - name: Mostrar resultados - Scan YEC
+      debug:
+        msg: |
+          Host {{ item.item[0].host }} puerto {{ item.item[1] }}:
+          rc={{ item.rc }}
+          stdout={{ item.stdout }}
+          stderr={{ item.stderr }}
+      loop: "{{ resultado_yec.results }}"

@@ -1,0 +1,49 @@
+---
+- name: Check connectivity from servidores to tor, yec, vips
+  hosts: servidores
+  gather_facts: no
+  vars:
+    ports:
+      - 1521
+      - 1523
+    destinos:
+      tor:
+        - exaccx113dstor-scan.ceca.es
+        - 172.31.97.22
+        - 172.31.97.23
+        - 172.31.97.24
+      yec:
+        - exaccx113dsyec-scan.ceca.es
+        - 172.31.97.32
+        - 172.31.97.33
+        - 172.31.97.31
+        - 172.31.97.29
+        - 172.31.97.28
+        - 172.31.97.30
+      vips:
+        - exaccx113dstor-1-vip.ceca.es
+        - 172.31.97.20
+        - exaccx113dstor-2-vip.ceca.es
+        - 172.31.97.21
+        - exaccx113dsyec-1-vip.ceca.es
+        - 172.31.97.29
+        - exaccx113dsyec-2-vip.ceca.es
+        - 172.31.97.30
+
+  tasks:
+    - name: Check connectivity to all destinations and ports
+      shell: nc -vz -w 3 {{ item.0 }} {{ item.1 }}
+      register: nc_result
+      ignore_errors: yes
+      loop: "{{ query('cartesian', destinos.tor + destinos.yec + destinos.vips, ports) }}"
+
+    - name: Show results in table format
+      debug:
+        msg: >-
+          {{ "%-20s | %-25s | %-5s | %-6s" | format(
+            inventory_hostname,
+            item.item.0,
+            item.item.1,
+            ('OK' if item.rc == 0 else 'FALLO')
+          ) }}
+      loop: "{{ nc_result.results }}"

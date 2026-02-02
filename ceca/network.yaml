@@ -1,0 +1,37 @@
+---
+- name: Obtener IP, MAC y fecha del equipo remoto
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Obtener dirección IP de eth0
+      command: ip -o -4 addr show eth0
+      register: ip_output
+
+    - name: Extraer IP de eth0
+      set_fact:
+        ip_address: "{{ ip_output.stdout.split()[3].split('/')[0] }}"
+
+    - name: Obtener dirección MAC de eth0
+      command: cat /sys/class/net/eth0/address
+      register: mac_output
+
+    - name: Extraer MAC
+      set_fact:
+        mac_address: "{{ mac_output.stdout }}"
+
+    - name: Obtener fecha actual en el equipo remoto
+      command: date '+%Y-%m-%d %H:%M:%S'
+      register: date_output
+
+    - name: Extraer fecha
+      set_fact:
+        current_date: "{{ date_output.stdout }}"
+
+    - name: Mostrar resultados
+      debug:
+        msg:
+          - "IP: {{ ip_address }}"
+          - "MAC: {{ mac_address }}"
+          - "Fecha: {{ current_date }}"
+

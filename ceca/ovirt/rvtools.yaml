@@ -1,0 +1,40 @@
+---
+- name: Exportar listado de VMs desde oVirt y copiar al controller
+  hosts: ovirt-engine
+  become: true
+  vars:
+    fecha_actual: "{{ ansible_date_time.date }}"  # yyyy-mm-dd
+    nombre_archivo: "{{ inventory_hostname }}-{{ fecha_actual }}-list_vm.csv"
+    ruta_local: "{{ lookup('env', 'PWD') }}/reports-rhv"
+
+  tasks:
+    - name: Ejecutar script para exportar VMs a CSV
+      shell: >
+        /usr/share/ovirt-engine/dbscripts/engine-psql.sh -c
+        "copy (select * from server_vms order by vm_name)
+        to stdout with csv header;"
+      register: vm_list_output
+
+    - name: Guardar salida en archivo CSV en host remoto
+      copy:
+        content: "{{ vm_list_output.stdout }}"
+        dest: "/tmp/list_vm.csv"
+
+    - name: Crear directorio local si no existe
+      delegate_to: localhost
+      run_once: true
+      file:
+        path: "{{ ruta_local }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copiar CSV al controlador (localhost) con nombre personalizado
+      fetch:
+        src: /tmp/list_vm.csv
+        dest: "{{ ruta_local }}/{{ nombre_archivo }}"
+        flat: yes
+
+    - name: Borrar archivo CSV del host remoto
+      file:
+        path: /tmp/list_vm.csv
+        state: absent

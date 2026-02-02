@@ -1,0 +1,28 @@
+---
+- name: Recopilar información de hardware
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Obtener tamaño total de discos en GB
+      shell: |
+        #lsblk -b -d -o SIZE -n | awk '{sum += $1} END {print int(sum / (1024*1024*1024))}'
+        lsblk -b -d -o SIZE,TYPE | awk '$2=="disk"{sum+=$1} END{print int(sum/(1024*1024*1024))}'
+      register: disk_size
+      changed_when: false
+
+    - name: Guardar información en un archivo local (en el controlador)
+      delegate_to: localhost
+      run_once: true
+      copy:
+        dest: ./hardware_info.csv
+        content: "Hostname,HDDs_GB,Memoria_GB,Cores,CPU\n"
+        force: yes
+
+    - name: Agregar datos del host a archivo CSV
+      delegate_to: localhost
+      lineinfile:
+        path: ./hardware_info.csv
+        line: "{{ ansible_hostname }},{{ disk_size.stdout }},{{ ansible_memtotal_mb | int // 1024 }},{{ ansible_processor_count }},{{ ansible_processor_cores }}"
+        create: yes
+        insertafter: EOF
+

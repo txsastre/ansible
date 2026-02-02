@@ -1,0 +1,101 @@
+#  USO. ESTA PENSADO PARA USARSE CONTRA 1 SERVER A LA VEZ
+#  ansible-playbook  -i <SERVER>, crea-usrs.yaml   --tags allowusers -K
+---
+- name: Crear usuarios desde CSV y agregar a AllowUsers (en host remoto)
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    ruta_csv_local: "/home/id3265/usuarios-fake.csv"
+    password_temporal: "Temporal.1234567"
+    ruta_sshd_config: "/home/id3265/sshd_config"
+    # ruta_sshd_config: "/etc/ssh/ssh/sshd_config"
+
+  tasks:
+
+    - name: Leer CSV desde localhost
+      community.general.read_csv:
+        path: "{{ ruta_csv_local }}"
+      register: csv_data
+      delegate_to: localhost
+      run_once: true
+      tags: always
+
+    - name: Verificar estructura de datos
+      debug:
+        var: csv_data.list
+      run_once: true
+      tags: always
+
+    - name: Crear usuarios en host remoto
+      user:
+        name: "{{ item.id }}"
+        comment: "ES/C/000000/CECA/({{ item.nombre }}) - ({{ item.email }})"
+        password: "{{ password_temporal | password_hash('sha512') }}"
+        update_password: on_create
+        shell: /bin/bash
+        state: present
+      loop: "{{ csv_data.list }}"
+
+    - name: Configurar políticas de contraseña
+      command: chage -M 90 -E -1 {{ item.id }}
+      loop: "{{ csv_data.list }}"
+
+    - name: Forzar cambio de contraseña al primer login
+      command: passwd --expire {{ item.id }}
+      loop: "{{ csv_data.list }}"
+
+    - name: Obtener usuarios del CSV para AllowUsers
+      set_fact:
+        nuevos_usuarios: "{{ csv_data.list | map(attribute='id') | list }}"
+
+#================
+    - name: Obtener fecha actual en formato YYYYMMDD_HHMMSS
+      command: date +"%Y%m%d_%H%M%S"
+      register: fecha_backup
+      changed_when: false
+      tags: allowusers
+
+    - name: Hacer backup de sshd_config antes de modificarlo
+      copy:
+        src: "{{ ruta_sshd_config }}"
+        dest: "{{ ruta_sshd_config }}.bak.{{ fecha_backup.stdout }}"
+        remote_src: true
+      tags: allowusers
+
+    - name: Obtener usuarios del CSV para AllowUsers
+      set_fact:
+        nuevos_usuarios: "{{ csv_data.list | map(attribute='id') | list }}"
+      tags: allowusers
+
+    - name: Leer línea actual de AllowUsers
+      shell: "grep '^AllowUsers' {{ ruta_sshd_config }} || echo 'AllowUsers'"
+      register: allowusers_line
+      tags: allowusers
+    - name: Construir nueva línea AllowUsers sin duplicados
+      set_fact:
+        linea_allowusers_actualizada: >-
+          AllowUsers {{
+            (allowusers_line.stdout.split()[1:] + nuevos_usuarios)
+            | unique
+            | join(' ')
+          }}
+      tags: allowusers
+
+    - name: Actualizar línea AllowUsers en sshd_config
+      lineinfile:
+        path: "{{ ruta_sshd_config }}"
+        regexp: '^AllowUsers'
+        line: "{{ linea_allowusers_actualizada }}"
+        backrefs: yes
+      notify: Reiniciar_sshd
+      tags: allowusers
+
+
+  handlers:
+    - name: Reiniciar_sshd
+      service:
+        name: sshd
+        state: restarted
+

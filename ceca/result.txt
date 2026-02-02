@@ -1,0 +1,591 @@
+
+PLAY [Recolectar información del sistema] **************************************
+
+TASK [Obtener fecha] ***********************************************************
+changed: [PRDCOTE]
+changed: [PPDYEC1]
+changed: [CAOBILLA]
+changed: [LILO]
+changed: [PREALFSRV1]
+changed: [NARCISO]
+changed: [NARDO]
+changed: [DEMOJEAP]
+changed: [NCYEC1]
+changed: [PPDTOR2]
+changed: [DESACOTE]
+changed: [DESAJBOSS]
+changed: [LOTO]
+changed: [DESABEWEB]
+changed: [LIMA]
+changed: [DEMOPPD]
+changed: [PROANS2]
+
+TASK [Mostrar fecha] ***********************************************************
+ok: [LILO] => {
+    "fecha.stdout": "Tue Aug  5 09:10:18 CEST 2025"
+}
+ok: [PRDCOTE] => {
+    "fecha.stdout": "Tue Aug  5 09:10:17 CEST 2025"
+}
+ok: [PPDYEC1] => {
+    "fecha.stdout": "Tue Aug  5 09:10:17 CEST 2025"
+}
+ok: [DEMOJEAP] => {
+    "fecha.stdout": "Tue Aug  5 09:10:19 CEST 2025"
+}
+ok: [PREALFSRV1] => {
+    "fecha.stdout": "Tue Aug  5 09:10:18 CEST 2025"
+}
+ok: [CAOBILLA] => {
+    "fecha.stdout": "Tue Aug  5 09:10:18 CEST 2025"
+}
+ok: [NARCISO] => {
+    "fecha.stdout": "Tue Aug  5 09:10:18 CEST 2025"
+}
+ok: [NARDO] => {
+    "fecha.stdout": "Tue Aug  5 09:10:19 CEST 2025"
+}
+ok: [DESAJBOSS] => {
+    "fecha.stdout": "Tue Aug  5 09:10:20 CEST 2025"
+}
+ok: [PPDTOR2] => {
+    "fecha.stdout": "Tue Aug  5 09:10:19 CEST 2025"
+}
+ok: [DEMOPPD] => {
+    "fecha.stdout": "Tue Aug  5 09:10:21 AM CEST 2025"
+}
+ok: [DESACOTE] => {
+    "fecha.stdout": "Tue Aug  5 09:10:20 CEST 2025"
+}
+ok: [NCYEC1] => {
+    "fecha.stdout": "Tue Aug  5 09:10:19 CEST 2025"
+}
+ok: [LOTO] => {
+    "fecha.stdout": "Tue Aug  5 09:10:21 CEST 2025"
+}
+ok: [DESABEWEB] => {
+    "fecha.stdout": "mar 05 ago 2025 09:10:21 CEST"
+}
+ok: [LIMA] => {
+    "fecha.stdout": "Tue Aug  5 09:10:21 CEST 2025"
+}
+ok: [PROANS2] => {
+    "fecha.stdout": "Tue Aug  5 09:10:22 CEST 2025"
+}
+
+TASK [Obtener hostname remoto] *************************************************
+changed: [PRDCOTE]
+changed: [PPDYEC1]
+changed: [CAOBILLA]
+changed: [LILO]
+changed: [PREALFSRV1]
+changed: [NARCISO]
+changed: [NARDO]
+changed: [NCYEC1]
+changed: [DEMOJEAP]
+changed: [PPDTOR2]
+changed: [DESACOTE]
+changed: [LOTO]
+changed: [DESAJBOSS]
+changed: [DEMOPPD]
+changed: [LIMA]
+changed: [PROANS2]
+changed: [DESABEWEB]
+
+TASK [Mostrar hostname remoto] *************************************************
+ok: [LILO] => {
+    "hostname_remote.stdout": "lilo"
+}
+ok: [PRDCOTE] => {
+    "hostname_remote.stdout": "prdcote"
+}
+ok: [PREALFSRV1] => {
+    "hostname_remote.stdout": "prealfsrv1"
+}
+ok: [PPDYEC1] => {
+    "hostname_remote.stdout": "ppdyec1"
+}
+ok: [CAOBILLA] => {
+    "hostname_remote.stdout": "caobilla"
+}
+ok: [NARCISO] => {
+    "hostname_remote.stdout": "narciso"
+}
+ok: [DEMOJEAP] => {
+    "hostname_remote.stdout": "demojeap"
+}
+ok: [NARDO] => {
+    "hostname_remote.stdout": "nardo"
+}
+ok: [NCYEC1] => {
+    "hostname_remote.stdout": "ncyec1"
+}
+ok: [PPDTOR2] => {
+    "hostname_remote.stdout": "ppdtor2"
+}
+ok: [DESACOTE] => {
+    "hostname_remote.stdout": "desacote"
+}
+ok: [DESAJBOSS] => {
+    "hostname_remote.stdout": "desajboss"
+}
+ok: [DEMOPPD] => {
+    "hostname_remote.stdout": "demoppd"
+}
+ok: [LOTO] => {
+    "hostname_remote.stdout": "loto"
+}
+ok: [DESABEWEB] => {
+    "hostname_remote.stdout": "desabeweb"
+}
+ok: [LIMA] => {
+    "hostname_remote.stdout": "lima"
+}
+ok: [PROANS2] => {
+    "hostname_remote.stdout": "proans2"
+}
+
+TASK [Obtener número de serie del sistema] *************************************
+changed: [PRDCOTE]
+changed: [PPDYEC1]
+changed: [CAOBILLA]
+changed: [PREALFSRV1]
+changed: [LILO]
+changed: [NARCISO]
+changed: [NARDO]
+changed: [NCYEC1]
+changed: [DEMOJEAP]
+changed: [PPDTOR2]
+changed: [DESACOTE]
+changed: [DESABEWEB]
+changed: [DESAJBOSS]
+changed: [LOTO]
+changed: [DEMOPPD]
+changed: [LIMA]
+changed: [PROANS2]
+
+TASK [Mostrar número de serie] *************************************************
+ok: [LILO] => {
+    "serial_number.stdout": "37383638-3330-5a43-3239-303530394a4e"
+}
+ok: [PRDCOTE] => {
+    "serial_number.stdout": "37393150-3032-5a43-3231-313730373254"
+}
+ok: [PPDYEC1] => {
+    "serial_number.stdout": "37383638-3330-5a43-3230-323730343932"
+}
+ok: [PREALFSRV1] => {
+    "serial_number.stdout": "VMware-42 0b 8a 66 23 82 81 1c-c5 cd 56 f8 90 c5 49 59"
+}
+ok: [CAOBILLA] => {
+    "serial_number.stdout": "37383638-3330-5a43-3239-303530394a54"
+}
+ok: [NARCISO] => {
+    "serial_number.stdout": "37383638-3330-5a43-3239-303530394a54"
+}
+ok: [DEMOJEAP] => {
+    "serial_number.stdout": "VMware-42 0b fb 59 e7 9b a5 b9-e1 35 a2 e2 f3 f9 4a 23"
+}
+ok: [NARDO] => {
+    "serial_number.stdout": "37383638-3330-5a43-3239-303530394a53"
+}
+ok: [NCYEC1] => {
+    "serial_number.stdout": "37383638-3330-5a43-3239-303530394a52"
+}
+ok: [PPDTOR2] => {
+    "serial_number.stdout": "37383638-3330-5a43-3239-303530394a51"
+}
+ok: [DESACOTE] => {
+    "serial_number.stdout": "VMware-42 0b 0e 19 98 f4 bd 88-0d 3e 53 0c f2 6d ec f9"
+}
+ok: [DESAJBOSS] => {
+    "serial_number.stdout": "VMware-42 0b dc dd 30 3e 83 ac-a0 75 c9 bb df a9 a8 3c"
+}
+ok: [DEMOPPD] => {
+    "serial_number.stdout": "VMware-42 0b d8 5a 97 5c ae 2c-72 30 4e 1c c9 dd 19 9a"
+}
+ok: [PROANS2] => {
+    "serial_number.stdout": "VMware-42 0b 65 89 3b 25 cd 21-74 b7 b3 c5 13 bf 87 fd"
+}
+ok: [LOTO] => {
+    "serial_number.stdout": "37383638-3330-5a43-3239-303530394a4e"
+}
+ok: [DESABEWEB] => {
+    "serial_number.stdout": "VMware-42 0b 9c 69 35 2c a0 1a-fe 9c 7c df 4c dd 36 ff"
+}
+ok: [LIMA] => {
+    "serial_number.stdout": "37383638-3330-5a43-3230-323730343932"
+}
+
+TASK [Obtener información del sistema con hostnamectl] *************************
+changed: [PRDCOTE]
+changed: [PPDYEC1]
+changed: [LILO]
+changed: [NARCISO]
+changed: [DEMOJEAP]
+changed: [NARDO]
+changed: [NCYEC1]
+changed: [PPDTOR2]
+changed: [DESACOTE]
+changed: [DESAJBOSS]
+changed: [DEMOPPD]
+changed: [LOTO]
+changed: [DESABEWEB]
+changed: [CAOBILLA]
+changed: [PROANS2]
+changed: [LIMA]
+changed: [PREALFSRV1]
+
+TASK [Mostrar información hostnamectl] *****************************************
+ok: [LILO] => {
+    "hostnamectl_info.stdout": "   Static hostname: lilo\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: e73ab263940d415d8e82363363cc6944\n    Virtualization: kvm\n  Operating System: OpenShift Enterprise\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.92.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [PREALFSRV1] => {
+    "hostnamectl_info.stdout": "   Static hostname: prealfsrv1\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: 158f0e033cb44a9ca0237c262825df3b\n    Virtualization: vmware\n  Operating System: RHEV\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.119.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [CAOBILLA] => {
+    "hostnamectl_info.stdout": "   Static hostname: caobilla\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: ed762f2b33ce41498a403ff48f3bf541\n    Virtualization: kvm\n  Operating System: RHEL\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.119.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [PRDCOTE] => {
+    "hostnamectl_info.stdout": "   Static hostname: prdcote\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: 6f872f48673146d491da60907727ace5\n           Boot ID: 1ed15008fb154e08ba473013155b28b5\n    Virtualization: kvm\n  Operating System: Red Hat Enterprise Linux 8.10 (Ootpa)\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:8::baseos\n            Kernel: Linux 4.18.0-553.62.1.el8_10.x86_64\n      Architecture: x86-64"
+}
+ok: [DEMOJEAP] => {
+    "hostnamectl_info.stdout": "   Static hostname: demojeap\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: 12296731f3d8483d8baedbff57781285\n    Virtualization: vmware\n  Operating System: OpenShift Enterprise\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.119.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [PPDYEC1] => {
+    "hostnamectl_info.stdout": "   Static hostname: ppdyec1\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: cfd4c7ba5255428e84517760ad310643\n    Virtualization: kvm\n  Operating System: RHEL\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.119.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [NARDO] => {
+    "hostnamectl_info.stdout": "   Static hostname: nardo\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: 331fac53917648fc98d85c6fbe71bbf0\n    Virtualization: kvm\n  Operating System: RHEL\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.119.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [NARCISO] => {
+    "hostnamectl_info.stdout": "   Static hostname: narciso\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: 8679884068ca46529d6ea1a5cc257a27\n    Virtualization: kvm\n  Operating System: Red Hat Enterprise Linux\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.119.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [NCYEC1] => {
+    "hostnamectl_info.stdout": "   Static hostname: ncyec1\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: 6f872f48673146d491da60907727ace5\n           Boot ID: 40f24e2f6dd440e390a2febf2fe279f4\n    Virtualization: kvm\n  Operating System: Red Hat Enterprise Linux 8.10 (Ootpa)\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:8::baseos\n            Kernel: Linux 4.18.0-553.60.1.el8_10.x86_64\n      Architecture: x86-64"
+}
+ok: [DEMOPPD] => {
+    "hostnamectl_info.stdout": " Static hostname: demoppd\n       Icon name: computer-vm\n         Chassis: vm 🖴\n      Machine ID: 1bd35679585141649bbf9d8ed15e5a98\n         Boot ID: 8be80e11e5e749a6a3c93753d218891c\n  Virtualization: vmware\nOperating System: Red Hat Enterprise Linux 9.6 (Plow)\n     CPE OS Name: cpe:/o:redhat:enterprise_linux:9::baseos\n          Kernel: Linux 5.14.0-570.17.1.el9_6.x86_64\n    Architecture: x86-64\n Hardware Vendor: VMware, Inc.\n  Hardware Model: VMware Virtual Platform\nFirmware Version: 6.00"
+}
+ok: [PPDTOR2] => {
+    "hostnamectl_info.stdout": "   Static hostname: ppdtor2\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: c797110a248d478ebae50339e771b536\n    Virtualization: kvm\n  Operating System: OpenShift Enterprise\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.119.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [DESACOTE] => {
+    "hostnamectl_info.stdout": "   Static hostname: desacote\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: 6f872f48673146d491da60907727ace5\n           Boot ID: eccb7b843c73439d8eb6c5828f392d1f\n    Virtualization: vmware\n  Operating System: Red Hat Enterprise Linux 8.10 (Ootpa)\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:8::baseos\n            Kernel: Linux 4.18.0-553.60.1.el8_10.x86_64\n      Architecture: x86-64"
+}
+ok: [DESAJBOSS] => {
+    "hostnamectl_info.stdout": "   Static hostname: desajboss\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: b5eba3bdb3e6439ca4978128524303d6\n    Virtualization: vmware\n  Operating System: Red Hat Enterprise Linux\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.119.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [LOTO] => {
+    "hostnamectl_info.stdout": "   Static hostname: loto\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: c742febfdddd4429b898a115a5dcfb24\n    Virtualization: kvm\n  Operating System: OpenShift Enterprise\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.92.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [LIMA] => {
+    "hostnamectl_info.stdout": "   Static hostname: lima\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: 6a194422b9944104bfd66eb923e70198\n    Virtualization: kvm\n  Operating System: OpenShift Enterprise\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:7.9:GA:server\n            Kernel: Linux 3.10.0-1160.21.1.el7.x86_64\n      Architecture: x86-64"
+}
+ok: [DESABEWEB] => {
+    "hostnamectl_info.stdout": " Static hostname: desabeweb\n       Icon name: computer-vm\n         Chassis: vm 🖴\n      Machine ID: f94b03d46da34e5194d516bdc261ca86\n         Boot ID: a4e26b7dab3a482396915d415426b93e\n  Virtualization: vmware\nOperating System: Red Hat Enterprise Linux 9.6 (Plow)\n     CPE OS Name: cpe:/o:redhat:enterprise_linux:9::baseos\n          Kernel: Linux 5.14.0-570.17.1.el9_6.x86_64\n    Architecture: x86-64\n Hardware Vendor: VMware, Inc.\n  Hardware Model: VMware Virtual Platform\nFirmware Version: 6.00"
+}
+ok: [PROANS2] => {
+    "hostnamectl_info.stdout": "   Static hostname: proans2\n         Icon name: computer-vm\n           Chassis: vm\n        Machine ID: f9773f1a86af354394ae3fecc6edbcc3\n           Boot ID: 7b1d0687e56d4ef8b972b0c329c5a1db\n    Virtualization: vmware\n  Operating System: Red Hat Enterprise Linux 8.10 (Ootpa)\n       CPE OS Name: cpe:/o:redhat:enterprise_linux:8::baseos\n            Kernel: Linux 4.18.0-553.54.1.el8_10.x86_64\n      Architecture: x86-64"
+}
+
+TASK [Listar archivo /root/anaconda-ks.cfg] ************************************
+changed: [PRDCOTE]
+changed: [PPDYEC1]
+changed: [CAOBILLA]
+changed: [LILO]
+changed: [PREALFSRV1]
+changed: [NARCISO]
+changed: [NARDO]
+changed: [NCYEC1]
+changed: [DEMOJEAP]
+changed: [PPDTOR2]
+changed: [DESACOTE]
+changed: [DEMOPPD]
+changed: [LOTO]
+changed: [DESAJBOSS]
+changed: [DESABEWEB]
+changed: [LIMA]
+changed: [PROANS2]
+
+TASK [Mostrar listado de /root/anaconda-ks.cfg] ********************************
+ok: [LILO] => {
+    "ls_anaconda_ks.stdout": ""
+}
+ok: [PRDCOTE] => {
+    "ls_anaconda_ks.stdout": "-rw-------. 1 root root 2243 Mar 12  2020 /root/anaconda-ks.cfg"
+}
+ok: [PREALFSRV1] => {
+    "ls_anaconda_ks.stdout": "-rw------- 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg"
+}
+ok: [CAOBILLA] => {
+    "ls_anaconda_ks.stdout": "-rw-------. 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg"
+}
+ok: [PPDYEC1] => {
+    "ls_anaconda_ks.stdout": "-rw-------. 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg"
+}
+ok: [DEMOJEAP] => {
+    "ls_anaconda_ks.stdout": "-rw------- 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg"
+}
+ok: [NARCISO] => {
+    "ls_anaconda_ks.stdout": "-rw-------. 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg"
+}
+ok: [NCYEC1] => {
+    "ls_anaconda_ks.stdout": "-rw-------. 1 root root 2243 Mar 12  2020 /root/anaconda-ks.cfg"
+}
+ok: [NARDO] => {
+    "ls_anaconda_ks.stdout": "-rw-------. 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg"
+}
+ok: [PPDTOR2] => {
+    "ls_anaconda_ks.stdout": "-rw-r--r--. 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg"
+}
+ok: [DESACOTE] => {
+    "ls_anaconda_ks.stdout": "-rw------- 1 root root 2243 Mar 12  2020 /root/anaconda-ks.cfg"
+}
+ok: [DESAJBOSS] => {
+    "ls_anaconda_ks.stdout": "-rw------- 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg"
+}
+ok: [LOTO] => {
+    "ls_anaconda_ks.stdout": ""
+}
+ok: [DEMOPPD] => {
+    "ls_anaconda_ks.stdout": "-rw-------. 1 root root 1701 Jan 30  2024 /root/anaconda-ks.cfg"
+}
+ok: [DESABEWEB] => {
+    "ls_anaconda_ks.stdout": "-rw-------. 1 root root 1733 may 31  2023 /root/anaconda-ks.cfg"
+}
+ok: [LIMA] => {
+    "ls_anaconda_ks.stdout": ""
+}
+ok: [PROANS2] => {
+    "ls_anaconda_ks.stdout": "-rw------- 1 root root 1456 Oct 30  2014 /root/anaconda-ks.cfg"
+}
+
+TASK [Mostrar direcciones IP de interfaces de red] *****************************
+changed: [PRDCOTE]
+changed: [PPDYEC1]
+changed: [CAOBILLA]
+changed: [LILO]
+changed: [PREALFSRV1]
+changed: [NARCISO]
+changed: [NARDO]
+changed: [DEMOJEAP]
+changed: [PPDTOR2]
+changed: [NCYEC1]
+changed: [DESACOTE]
+changed: [DESAJBOSS]
+changed: [LOTO]
+changed: [DEMOPPD]
+changed: [DESABEWEB]
+changed: [LIMA]
+changed: [PROANS2]
+
+TASK [Mostrar resultado de ip a con filtros] ***********************************
+ok: [LILO] => {
+    "ip_info.stdout": "    inet 172.31.128.6/21 brd 172.31.135.255 scope global eth0\n    inet 172.31.128.79/21 brd 172.31.135.255 scope global secondary eth0:79\n    inet 172.31.47.156/24 brd 172.31.47.255 scope global eth1\n    inet 172.23.147.6/20 brd 172.23.159.255 scope global eth2\n    inet 172.22.147.8/20 brd 172.22.159.255 scope global eth3"
+}
+ok: [PREALFSRV1] => {
+    "ip_info.stdout": "    inet 172.31.184.25/21 brd 172.31.191.255 scope global eth0\n    inet 172.31.184.24/21 brd 172.31.191.255 scope global secondary eth0:24\n    inet 172.31.184.26/21 brd 172.31.191.255 scope global secondary eth0:26\n    inet 172.31.184.28/21 brd 172.31.191.255 scope global secondary eth0:28"
+}
+ok: [PRDCOTE] => {
+    "ip_info.stdout": "    inet 172.27.8.177/16 brd 172.27.255.255 scope global noprefixroute enp1s0"
+}
+ok: [CAOBILLA] => {
+    "ip_info.stdout": "    inet 172.31.152.2/20 brd 172.31.159.255 scope global eth0\n    inet 172.31.152.241/20 brd 172.31.159.255 scope global secondary eth0:241\n    inet 172.31.152.242/20 brd 172.31.159.255 scope global secondary eth0:242\n    inet 172.31.152.243/20 brd 172.31.159.255 scope global secondary eth0:243\n    inet 172.31.152.84/20 brd 172.31.159.255 scope global secondary eth0:84\n    inet 172.31.47.236/24 brd 172.31.47.255 scope global eth1\n    inet 172.23.148.10/20 brd 172.23.159.255 scope global eth2\n    inet 172.23.148.12/20 brd 172.23.159.255 scope global secondary eth2:12"
+}
+ok: [DEMOJEAP] => {
+    "ip_info.stdout": "    inet 172.27.10.167/16 brd 172.27.255.255 scope global eth0\n    inet 172.27.2.142/16 brd 172.27.255.255 scope global secondary eth0:142\n    inet 172.31.47.216/24 brd 172.31.47.255 scope global eth1\n    inet 172.23.146.5/20 brd 172.23.159.255 scope global eth2"
+}
+ok: [PPDYEC1] => {
+    "ip_info.stdout": "    inet 172.31.151.1/20 brd 172.31.159.255 scope global eth0\n    inet 172.31.151.147/20 brd 172.31.159.255 scope global secondary eth0:147\n    inet 172.31.151.148/20 brd 172.31.159.255 scope global secondary eth0:148\n    inet 172.31.151.44/20 brd 172.31.159.255 scope global secondary eth0:44\n    inet 172.31.151.69/20 brd 172.31.159.255 scope global secondary eth0:69\n    inet 172.31.151.74/20 brd 172.31.159.255 scope global secondary eth0:74\n    inet 172.31.151.79/20 brd 172.31.159.255 scope global secondary eth0:79\n    inet 172.31.47.40/24 brd 172.31.47.255 scope global eth1\n    inet 172.23.147.1/20 brd 172.23.159.255 scope global eth2\n    inet 172.23.147.13/20 brd 172.23.159.255 scope global secondary eth2:13\n    inet 172.23.147.14/20 brd 172.23.159.255 scope global secondary eth2:14\n    inet 172.22.148.1/20 brd 172.22.159.255 scope global eth3"
+}
+ok: [NARDO] => {
+    "ip_info.stdout": "    inet 172.31.157.2/20 brd 172.31.159.255 scope global eth0\n    inet 172.31.157.15/20 brd 172.31.159.255 scope global secondary eth0:15\n    inet 172.31.157.155/20 brd 172.31.159.255 scope global secondary eth0:155\n    inet 172.31.157.156/20 brd 172.31.159.255 scope global secondary eth0:156\n    inet 172.31.157.159/20 brd 172.31.159.255 scope global secondary eth0:159\n    inet 172.31.157.16/20 brd 172.31.159.255 scope global secondary eth0:16\n    inet 172.31.157.22/20 brd 172.31.159.255 scope global secondary eth0:22\n    inet 172.31.157.226/20 brd 172.31.159.255 scope global secondary eth0:226\n    inet 172.31.157.240/20 brd 172.31.159.255 scope global secondary eth0:240\n    inet 172.31.157.28/20 brd 172.31.159.255 scope global secondary eth0:28\n    inet 172.31.157.51/20 brd 172.31.159.255 scope global secondary eth0:51\n    inet 172.31.157.63/20 brd 172.31.159.255 scope global secondary eth0:63\n    inet 172.31.157.81/20 brd 172.31.159.255 scope global secondary eth0:81\n    inet 172.31.157.82/20 brd 172.31.159.255 scope global secondary eth0:82\n    inet 172.31.47.172/24 brd 172.31.47.255 scope global eth1\n    inet 172.23.151.4/20 brd 172.23.159.255 scope global eth2\n    inet 172.23.151.10/20 brd 172.23.159.255 scope global secondary eth2:10\n    inet 172.23.151.15/20 brd 172.23.159.255 scope global secondary eth2:15\n    inet 172.23.151.155/20 brd 172.23.159.255 scope global secondary eth2:155\n    inet 172.23.151.156/20 brd 172.23.159.255 scope global secondary eth2:156\n    inet 172.23.151.157/20 brd 172.23.159.255 scope global secondary eth2:157\n    inet 172.23.151.158/20 brd 172.23.159.255 scope global secondary eth2:158\n    inet 172.23.151.16/20 brd 172.23.159.255 scope global secondary eth2:16\n    inet 172.23.151.22/20 brd 172.23.159.255 scope global secondary eth2:22\n    inet 172.23.151.51/20 brd 172.23.159.255 scope global secondary eth2:51\n    inet 172.23.151.59/20 brd 172.23.159.255 scope global secondary eth2:59\n    inet 172.23.151.63/20 brd 172.23.159.255 scope global secondary eth2:63\n    inet 172.23.151.65/20 brd 172.23.159.255 scope global secondary eth2:65\n    inet 172.23.151.68/20 brd 172.23.159.255 scope global secondary eth2:68\n    inet 172.23.151.82/20 brd 172.23.159.255 scope global secondary eth2:82"
+}
+ok: [PPDTOR2] => {
+    "ip_info.stdout": "    inet 172.31.152.4/20 brd 172.31.159.255 scope global eth0\n    inet 172.31.152.70/20 brd 172.31.159.255 scope global secondary eth0:70\n    inet 172.31.152.71/20 brd 172.31.159.255 scope global secondary eth0:71\n    inet 172.31.152.72/20 brd 172.31.159.255 scope global secondary eth0:72\n    inet 172.31.152.75/20 brd 172.31.159.255 scope global secondary eth0:75\n    inet 172.31.152.80/20 brd 172.31.159.255 scope global secondary eth0:80\n    inet 172.31.47.62/24 brd 172.31.47.255 scope global eth1\n    inet 172.23.148.2/20 brd 172.23.159.255 scope global eth2\n    inet 172.22.147.5/20 brd 172.22.159.255 scope global eth3\n    inet 172.22.147.6/20 brd 172.22.159.255 scope global secondary eth3:6"
+}
+ok: [NARCISO] => {
+    "ip_info.stdout": "    inet 172.31.158.2/20 brd 172.31.159.255 scope global eth0\n    inet 172.31.158.15/20 brd 172.31.159.255 scope global secondary eth0:15\n    inet 172.31.158.155/20 brd 172.31.159.255 scope global secondary eth0:155\n    inet 172.31.158.156/20 brd 172.31.159.255 scope global secondary eth0:156\n    inet 172.31.158.159/20 brd 172.31.159.255 scope global secondary eth0:159\n    inet 172.31.158.16/20 brd 172.31.159.255 scope global secondary eth0:16\n    inet 172.31.158.22/20 brd 172.31.159.255 scope global secondary eth0:22\n    inet 172.31.158.226/20 brd 172.31.159.255 scope global secondary eth0:226\n    inet 172.31.158.240/20 brd 172.31.159.255 scope global secondary eth0:240\n    inet 172.31.158.28/20 brd 172.31.159.255 scope global secondary eth0:28\n    inet 172.31.158.51/20 brd 172.31.159.255 scope global secondary eth0:51\n    inet 172.31.158.63/20 brd 172.31.159.255 scope global secondary eth0:63\n    inet 172.31.158.81/20 brd 172.31.159.255 scope global secondary eth0:81\n    inet 172.31.158.82/20 brd 172.31.159.255 scope global secondary eth0:82\n    inet 172.31.47.173/24 brd 172.31.47.255 scope global eth1\n    inet 172.23.152.4/20 brd 172.23.159.255 scope global eth2\n    inet 172.23.152.10/20 brd 172.23.159.255 scope global secondary eth2:10\n    inet 172.23.152.15/20 brd 172.23.159.255 scope global secondary eth2:15\n    inet 172.23.152.155/20 brd 172.23.159.255 scope global secondary eth2:155\n    inet 172.23.152.156/20 brd 172.23.159.255 scope global secondary eth2:156\n    inet 172.23.152.157/20 brd 172.23.159.255 scope global secondary eth2:157\n    inet 172.23.152.158/20 brd 172.23.159.255 scope global secondary eth2:158\n    inet 172.23.152.16/20 brd 172.23.159.255 scope global secondary eth2:16\n    inet 172.23.152.22/20 brd 172.23.159.255 scope global secondary eth2:22\n    inet 172.23.152.51/20 brd 172.23.159.255 scope global secondary eth2:51\n    inet 172.23.152.59/20 brd 172.23.159.255 scope global secondary eth2:59\n    inet 172.23.152.63/20 brd 172.23.159.255 scope global secondary eth2:63\n    inet 172.23.152.65/20 brd 172.23.159.255 scope global secondary eth2:65\n    inet 172.23.152.68/20 brd 172.23.159.255 scope global secondary eth2:68\n    inet 172.23.152.70/20 brd 172.23.159.255 scope global secondary eth2:70\n    inet 172.23.152.82/20 brd 172.23.159.255 scope global secondary eth2:82"
+}
+ok: [NCYEC1] => {
+    "ip_info.stdout": "    inet 172.31.176.6/21 brd 172.31.183.255 scope global noprefixroute ens3\n    inet 172.31.176.54/21 brd 172.31.183.255 scope global secondary noprefixroute ens3:54\n    inet 172.31.176.11/21 brd 172.31.183.255 scope global secondary noprefixroute ens3:11\n    inet 172.31.176.13/21 brd 172.31.183.255 scope global secondary noprefixroute ens3:13\n    inet 172.31.176.15/21 brd 172.31.183.255 scope global secondary noprefixroute ens3:15\n    inet 172.31.176.34/21 brd 172.31.183.255 scope global secondary noprefixroute ens3:34\n    inet 172.23.4.3/24 brd 172.23.4.255 scope global noprefixroute ens5\n    inet 172.23.4.5/24 brd 172.23.4.255 scope global secondary noprefixroute ens5\n    inet 172.23.4.11/24 brd 172.23.4.255 scope global secondary noprefixroute ens5"
+}
+ok: [DESAJBOSS] => {
+    "ip_info.stdout": "    inet 172.27.10.91/16 brd 172.27.255.255 scope global noprefixroute ens192\n    inet 172.27.1.205/16 brd 172.27.255.255 scope global secondary noprefixroute ens192:205\n    inet 172.31.47.96/24 brd 172.31.47.255 scope global noprefixroute eth1"
+}
+ok: [DESACOTE] => {
+    "ip_info.stdout": "    inet 172.27.10.8/16 brd 172.27.255.255 scope global noprefixroute ens192"
+}
+ok: [DEMOPPD] => {
+    "ip_info.stdout": "    inet 172.27.11.127/16 brd 172.27.255.255 scope global noprefixroute ens192\n    inet 172.23.146.13/20 brd 172.23.159.255 scope global noprefixroute ens224"
+}
+ok: [LIMA] => {
+    "ip_info.stdout": "    inet 172.31.131.4/21 brd 172.31.135.255 scope global eth0\n    inet 172.31.131.100/21 brd 172.31.135.255 scope global secondary eth0:100\n    inet 172.31.131.121/21 brd 172.31.135.255 scope global secondary eth0:121\n    inet 172.31.131.14/21 brd 172.31.135.255 scope global secondary eth0:14\n    inet 172.31.131.142/21 brd 172.31.135.255 scope global secondary eth0:142\n    inet 172.31.131.160/21 brd 172.31.135.255 scope global secondary eth0:160\n    inet 172.31.131.166/21 brd 172.31.135.255 scope global secondary eth0:166\n    inet 172.31.131.167/21 brd 172.31.135.255 scope global secondary eth0:167\n    inet 172.31.131.192/21 brd 172.31.135.255 scope global secondary eth0:192\n    inet 172.31.131.198/21 brd 172.31.135.255 scope global secondary eth0:198\n    inet 172.31.131.67/21 brd 172.31.135.255 scope global secondary eth0:67\n    inet 172.31.131.68/21 brd 172.31.135.255 scope global secondary eth0:68\n    inet 172.31.131.72/21 brd 172.31.135.255 scope global secondary eth0:72\n    inet 172.31.131.78/21 brd 172.31.135.255 scope global secondary eth0:78\n    inet 172.31.131.86/21 brd 172.31.135.255 scope global secondary eth0:86\n    inet 172.31.131.89/21 brd 172.31.135.255 scope global secondary eth0:89\n    inet 172.31.131.95/21 brd 172.31.135.255 scope global secondary eth0:95\n    inet 172.31.47.128/24 brd 172.31.47.255 scope global eth1\n    inet 172.23.144.4/20 brd 172.23.159.255 scope global eth2\n    inet 172.23.144.100/20 brd 172.23.159.255 scope global secondary eth2:100\n    inet 172.23.144.125/20 brd 172.23.159.255 scope global secondary eth2:125\n    inet 172.23.144.126/20 brd 172.23.159.255 scope global secondary eth2:126\n    inet 172.23.144.139/20 brd 172.23.159.255 scope global secondary eth2:139\n    inet 172.23.144.160/20 brd 172.23.159.255 scope global secondary eth2:160\n    inet 172.23.144.195/20 brd 172.23.159.255 scope global secondary eth2:195\n    inet 172.23.144.197/20 brd 172.23.159.255 scope global secondary eth2:197\n    inet 172.23.144.7/20 brd 172.23.159.255 scope global secondary eth2:7\n    inet 172.23.144.88/20 brd 172.23.159.255 scope global secondary eth2:88\n    inet 172.22.144.4/20 brd 172.22.159.255 scope global eth3"
+}
+ok: [PROANS2] => {
+    "ip_info.stdout": "    inet 172.31.184.7/21 brd 172.31.191.255 scope global eth0\n    inet 172.31.184.30/21 brd 172.31.191.255 scope global secondary eth0:30"
+}
+ok: [DESABEWEB] => {
+    "ip_info.stdout": "    inet 172.31.128.80/21 brd 172.31.135.255 scope global noprefixroute ens192\n    inet 172.23.144.83/20 brd 172.23.159.255 scope global noprefixroute ens224"
+}
+ok: [LOTO] => {
+    "ip_info.stdout": "    inet 172.31.129.3/21 brd 172.31.135.255 scope global eth0\n    inet 172.31.129.100/21 brd 172.31.135.255 scope global secondary eth0:100\n    inet 172.31.129.121/21 brd 172.31.135.255 scope global secondary eth0:121\n    inet 172.31.129.14/21 brd 172.31.135.255 scope global secondary eth0:14\n    inet 172.31.129.142/21 brd 172.31.135.255 scope global secondary eth0:142\n    inet 172.31.129.160/21 brd 172.31.135.255 scope global secondary eth0:160\n    inet 172.31.129.166/21 brd 172.31.135.255 scope global secondary eth0:166\n    inet 172.31.129.167/21 brd 172.31.135.255 scope global secondary eth0:167\n    inet 172.31.129.192/21 brd 172.31.135.255 scope global secondary eth0:192\n    inet 172.31.129.198/21 brd 172.31.135.255 scope global secondary eth0:198\n    inet 172.31.129.67/21 brd 172.31.135.255 scope global secondary eth0:67\n    inet 172.31.129.68/21 brd 172.31.135.255 scope global secondary eth0:68\n    inet 172.31.129.72/21 brd 172.31.135.255 scope global secondary eth0:72\n    inet 172.31.129.78/21 brd 172.31.135.255 scope global secondary eth0:78\n    inet 172.31.129.86/21 brd 172.31.135.255 scope global secondary eth0:86\n    inet 172.31.129.89/21 brd 172.31.135.255 scope global secondary eth0:89\n    inet 172.31.129.95/21 brd 172.31.135.255 scope global secondary eth0:95\n    inet 172.31.47.134/24 brd 172.31.47.255 scope global eth1\n    inet 172.23.148.3/20 brd 172.23.159.255 scope global eth2\n    inet 172.23.148.100/20 brd 172.23.159.255 scope global secondary eth2:100\n    inet 172.23.148.125/20 brd 172.23.159.255 scope global secondary eth2:125\n    inet 172.23.148.126/20 brd 172.23.159.255 scope global secondary eth2:126\n    inet 172.23.148.139/20 brd 172.23.159.255 scope global secondary eth2:139\n    inet 172.23.148.160/20 brd 172.23.159.255 scope global secondary eth2:160\n    inet 172.23.148.195/20 brd 172.23.159.255 scope global secondary eth2:195\n    inet 172.23.148.197/20 brd 172.23.159.255 scope global secondary eth2:197\n    inet 172.23.148.7/20 brd 172.23.159.255 scope global secondary eth2:7\n    inet 172.23.148.88/20 brd 172.23.159.255 scope global secondary eth2:88\n    inet 172.22.148.3/20 brd 172.22.159.255 scope global eth3"
+}
+
+TASK [Obtener memoria total online] ********************************************
+changed: [PRDCOTE]
+changed: [PPDYEC1]
+changed: [PREALFSRV1]
+changed: [LILO]
+changed: [CAOBILLA]
+changed: [NARCISO]
+changed: [NARDO]
+changed: [DEMOJEAP]
+changed: [NCYEC1]
+changed: [PPDTOR2]
+changed: [DESACOTE]
+fatal: [DESABEWEB]: FAILED! => {"changed": true, "cmd": "lsmem | grep 'Total online'", "delta": "0:00:00.031337", "end": "2025-08-05 09:10:48.290651", "msg": "non-zero return code", "rc": 1, "start": "2025-08-05 09:10:48.259314", "stderr": "", "stderr_lines": [], "stdout": "", "stdout_lines": []}
+changed: [LOTO]
+changed: [DESAJBOSS]
+changed: [DEMOPPD]
+changed: [LIMA]
+changed: [PROANS2]
+
+TASK [Mostrar memoria total online] ********************************************
+ok: [LILO] => {
+    "lsmem_total.stdout": "Total online memory:      32G"
+}
+ok: [PPDYEC1] => {
+    "lsmem_total.stdout": "Total online memory:      20G"
+}
+ok: [PRDCOTE] => {
+    "lsmem_total.stdout": "Total online memory:      16G"
+}
+ok: [PREALFSRV1] => {
+    "lsmem_total.stdout": "Total online memory:      64G"
+}
+ok: [NARCISO] => {
+    "lsmem_total.stdout": "Total online memory:      38G"
+}
+ok: [DEMOJEAP] => {
+    "lsmem_total.stdout": "Total online memory:      16G"
+}
+ok: [CAOBILLA] => {
+    "lsmem_total.stdout": "Total online memory:      32G"
+}
+ok: [NCYEC1] => {
+    "lsmem_total.stdout": "Total online memory:      12G"
+}
+ok: [NARDO] => {
+    "lsmem_total.stdout": "Total online memory:      38G"
+}
+ok: [DESACOTE] => {
+    "lsmem_total.stdout": "Total online memory:      16G"
+}
+ok: [DESAJBOSS] => {
+    "lsmem_total.stdout": "Total online memory:    42.3G"
+}
+ok: [PPDTOR2] => {
+    "lsmem_total.stdout": "Total online memory:      16G"
+}
+ok: [LOTO] => {
+    "lsmem_total.stdout": "Total online memory:      42G"
+}
+ok: [DEMOPPD] => {
+    "lsmem_total.stdout": "Total online memory:      16G"
+}
+ok: [LIMA] => {
+    "lsmem_total.stdout": "Total online memory:      42G"
+}
+ok: [PROANS2] => {
+    "lsmem_total.stdout": "Total online memory:      16G"
+}
+
+TASK [Obtener información de CPU y versión del sistema operativo] **************
+changed: [PRDCOTE]
+changed: [PPDYEC1]
+changed: [LILO]
+changed: [CAOBILLA]
+changed: [PREALFSRV1]
+changed: [NARCISO]
+changed: [NARDO]
+changed: [DEMOJEAP]
+changed: [NCYEC1]
+changed: [PPDTOR2]
+changed: [DESACOTE]
+changed: [LOTO]
+changed: [DESAJBOSS]
+changed: [LIMA]
+changed: [DEMOPPD]
+changed: [PROANS2]
+
+TASK [Mostrar información de CPU y sistema] ************************************
+ok: [LILO] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                4\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             4\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [CAOBILLA] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                6\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             6\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [PRDCOTE] => {
+    "cpu_and_os_info.stdout": "Architecture:        x86_64\nCPU(s):              4\nThread(s) per core:  1\nCore(s) per socket:  1\nSocket(s):           4\nRed Hat Enterprise Linux release 8.10 (Ootpa)"
+}
+ok: [PPDYEC1] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                10\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             10\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [DEMOJEAP] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                3\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             3\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [PREALFSRV1] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                4\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             4\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [NCYEC1] => {
+    "cpu_and_os_info.stdout": "Architecture:        x86_64\nCPU(s):              2\nThread(s) per core:  1\nCore(s) per socket:  1\nSocket(s):           2\nRed Hat Enterprise Linux release 8.10 (Ootpa)"
+}
+ok: [NARCISO] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                10\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             10\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [NARDO] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                6\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             6\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [PPDTOR2] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                10\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             10\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [DESACOTE] => {
+    "cpu_and_os_info.stdout": "Architecture:        x86_64\nCPU(s):              4\nThread(s) per core:  1\nCore(s) per socket:  1\nSocket(s):           4\nRed Hat Enterprise Linux release 8.10 (Ootpa)"
+}
+ok: [LIMA] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                8\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             8\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [DESAJBOSS] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                6\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             6\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+ok: [PROANS2] => {
+    "cpu_and_os_info.stdout": "Architecture:        x86_64\nCPU(s):              4\nThread(s) per core:  1\nCore(s) per socket:  1\nSocket(s):           4\nRed Hat Enterprise Linux release 8.10 (Ootpa)"
+}
+ok: [DEMOPPD] => {
+    "cpu_and_os_info.stdout": "Architecture:                         x86_64\nCPU(s):                               4\nThread(s) per core:                   1\nCore(s) per socket:                   1\nSocket(s):                            4\nRed Hat Enterprise Linux release 9.6 (Plow)"
+}
+ok: [LOTO] => {
+    "cpu_and_os_info.stdout": "Architecture:          x86_64\nCPU(s):                8\nThread(s) per core:    1\nCore(s) per socket:    1\nSocket(s):             8\nRed Hat Enterprise Linux Server release 7.9 (Maipo)"
+}
+
+PLAY RECAP *********************************************************************
+CAOBILLA                   : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+DEMOJEAP                   : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+DEMOPPD                    : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+DESABEWEB                  : ok=12   changed=6    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+DESACOTE                   : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+DESAJBOSS                  : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+LILO                       : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+LIMA                       : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+LOTO                       : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+NARCISO                    : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+NARDO                      : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+NCYEC1                     : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+PPDTOR2                    : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+PPDYEC1                    : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+PRDCOTE                    : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+PREALFSRV1                 : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+PROANS2                    : ok=16   changed=8    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

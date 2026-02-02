@@ -1,0 +1,75 @@
+---
+- name: Recolectar información del sistema
+  hosts: all
+  gather_facts: no
+  become: true
+
+  tasks:
+
+    - name: Obtener fecha
+      ansible.builtin.command: date
+      register: fecha
+
+    - name: Mostrar fecha
+      debug:
+        var: fecha.stdout
+
+    - name: Obtener hostname remoto
+      ansible.builtin.command: hostname
+      register: hostname_remote
+
+    - name: Mostrar hostname remoto
+      debug:
+        var: hostname_remote.stdout
+
+    - name: Obtener número de serie del sistema
+      ansible.builtin.command: dmidecode -s system-serial-number
+      register: serial_number
+
+    - name: Mostrar número de serie
+      debug:
+        var: serial_number.stdout
+
+    - name: Obtener información del sistema con hostnamectl
+      ansible.builtin.command: hostnamectl
+      register: hostnamectl_info
+
+    - name: Mostrar información hostnamectl
+      debug:
+        var: hostnamectl_info.stdout
+
+    - name: Listar archivo /root/anaconda-ks.cfg
+      ansible.builtin.command: ls -l /root/anaconda-ks.cfg
+      register: ls_anaconda_ks
+      failed_when: false
+
+    - name: Mostrar listado de /root/anaconda-ks.cfg
+      debug:
+        var: ls_anaconda_ks.stdout
+
+    - name: Mostrar direcciones IP de interfaces de red
+      ansible.builtin.shell: ip a | grep "inet " | grep " brd "
+      register: ip_info
+
+    - name: Mostrar resultado de ip a con filtros
+      debug:
+        var: ip_info.stdout
+
+    - name: Obtener memoria total online
+      ansible.builtin.shell: lsmem | grep 'Total online'
+      register: lsmem_total
+
+    - name: Mostrar memoria total online
+      debug:
+        var: lsmem_total.stdout
+
+    - name: Obtener información de CPU y versión del sistema operativo
+      ansible.builtin.shell: |
+        lscpu | egrep -i 'Archi|CPU\(s\):|Thread|core|Socket' | grep -v NUMA
+        cat /etc/system-release
+      register: cpu_and_os_info
+
+    - name: Mostrar información de CPU y sistema
+      debug:
+        var: cpu_and_os_info.stdout
+

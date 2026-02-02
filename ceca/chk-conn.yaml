@@ -1,0 +1,53 @@
+---
+- name: Comprobar puertos en hosts remotos
+  hosts: servers
+  gather_facts: no
+
+  vars:
+    hosts_to_check:
+      - exaccx11prevtor-scan.ceca.es
+      - exaccx11prevtor-1-vip.ceca.es
+      - exaccx11prevtor-2-vip.ceca.es
+      - exaccx11prevyec-scan.ceca.es
+      - 172.31.90.3
+      - 172.31.90.4
+      - 172.31.90.5
+      - 172.31.90.6
+      - 172.31.90.7
+      - 172.31.90.15
+      - 172.31.90.16
+      - 172.31.90.17
+
+    ports_to_check:
+      - 1521
+      - 1523
+
+  tasks:
+
+    - name: Ejecutar nc para chequear puertos desde servidor remoto
+      shell: |
+        for host in {{ hosts_to_check | join(' ') }}; do
+          for port in {{ ports_to_check | join(' ') }}; do
+            nc -vz -w 1 "$host" "$port" 2>&1
+          done
+        done
+      register: nc_results
+      ignore_errors: yes
+
+    - name: Mostrar resultados formateados
+      vars:
+        hostname: "{{ inventory_hostname }}"
+      set_fact:
+        lines: "{{ nc_results.stdout_lines }}"
+
+    - name: Procesar y mostrar resultados
+      debug:
+        msg: |
+          {% for line in lines %}
+          {% set connected = 'Connected' in line %}
+          {% set refused = 'refused' in line %}
+          {% set status = 'Conectado' if connected else ('** Rechazado **' if refused else '** Error **') %}
+          {% if line is search('^Connection to') %}
+          {{ hostname | truncate(15) }}  {{ (line.split()[2]) | truncate(30) }}  {{ (line.split()[3]) | truncate(6) }}  {{ status }}
+          {% endif %}
+          {% endfor %}

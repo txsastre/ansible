@@ -1,0 +1,11 @@
+- name: Descargar actualizaciones sin instalar (Red Hat)
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Asegurar que dnf-plugins-core está instalado
+      ansible.builtin.yum:
+        name: dnf-plugins-core
+        state: present
+
+    - name: Descargar paquetes pendientes sin instalar
+      ansible.builtin.command: dnf upgrade --downloadonly --assumeno

@@ -1,0 +1,30 @@
+- name: Obtener inventario de varios RHV
+  hosts: rhvs
+  gather_facts: no
+  collections:
+    - redhat.rhel_mgmt.rhv
+  tasks:
+    - name: Listar hosts físicos del RHV
+      rhv_host_facts:
+        url: "{{ rhv_url }}"
+        username: "{{ rhv_username }}"
+        password: "{{ rhv_password }}"
+        validate_certs: "{{ validate_certs }}"
+      delegate_to: localhost
+      register: hosts_info
+
+    - debug:
+        msg: "Hosts en {{ inventory_hostname }}: {{ hosts_info.hosts | length }}"
+
+    - name: Listar máquinas virtuales del RHV
+      rhv_vm_facts:
+        url: "{{ rhv_url }}"
+        username: "{{ rhv_username }}"
+        password: "{{ rhv_password }}"
+        validate_certs: "{{ validate_certs }}"
+      delegate_to: localhost
+      register: vms_info
+
+    - debug:
+        msg: "VMs en {{ inventory_hostname }}: {{ vms_info.vms | length }}"
+

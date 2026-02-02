@@ -1,0 +1,177 @@
+---
+- name: Listado de VMs en oVirt con información de discos y NICs
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - .env.ovirt
+  tasks:
+    - name: Autenticar en oVirt
+      ovirt_auth:
+        url: "{{ ovirt_url }}"
+        username: "{{ ovirt_username }}"
+        password: "{{ ovirt_password }}"
+        insecure: "{{ ovirt_insecure }}"
+      register: ovirt_auth
+
+    - name: Obtener información completa de todas las VMs (incluyendo disk_attachments y nics)
+      ovirt_vm_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+        fetch_nested: true
+        nested_attributes:
+          - disk_attachments
+          - nics
+      register: vm_info
+
+    - name: Obtener información de todos los discos del sistema
+      ovirt_disk_info:
+        auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
+      register: all_disks_info
+
+    - name: Debug - Mostrar disk_attachments de la primera VM
+      debug:
+        msg: "VM: {{ vm_info.ovirt_vms[0].name }} - disk_attachments: {{ vm_info.ovirt_vms[0].disk_attachments }}"
+      when: vm_info.ovirt_vms | length > 0
+
+    - name: Debug - Mostrar estructura completa de NIC de la primera VM
+      debug:
+        msg: "VM: {{ vm_info.ovirt_vms[0].name }} - Primera NIC completa: {{ vm_info.ovirt_vms[0].nics[0] }}"
+      when: vm_info.ovirt_vms | length > 0 and vm_info.ovirt_vms[0].nics | length > 0
+
+    - name: Construir tabla de VMs con información de discos y NICs
+      set_fact:
+        vm_table: |
+          {{ "%-20s %-8s %-5s %-10s %-6s %-12s %-5s %s" | format("Nombre", "Estado", "vCPUs", "Memoria(MB)", "Discos", "Total(GB)", "NICs", "Nombres Discos") }}
+          {{ "-" * 110 }}
+          {% for vm in vm_info.ovirt_vms -%}
+          {%- set vm_disk_attachments = vm.disk_attachments | default([]) -%}
+          {%- set vm_nics = vm.nics | default([]) -%}
+          {%- set vm_disks = [] -%}
+          {%- set total_size = 0 -%}
+          {%- for attachment in vm_disk_attachments -%}
+            {%- for disk in all_disks_info.ovirt_disks -%}
+              {%- if disk.id == attachment.id -%}
+                {%- set disk_size_gb = (disk.provisioned_size / 1024 / 1024 / 1024) | round(1) -%}
+                {%- set total_size = total_size + disk_size_gb -%}
+                {%- set _ = vm_disks.append({'name': disk.name, 'size': disk_size_gb}) -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endfor -%}
+          {{ "%-20s %-8s %-5s %-10s %-6s %-12s %-5s" | format(
+            vm.name,
+            vm.status,
+            (vm.cpu.topology.sockets * vm.cpu.topology.cores * vm.cpu.topology.threads),
+            (vm.memory / 1024 / 1024) | int,
+            vm_disks | length,
+            total_size | round(1),
+            vm_nics | length
+          ) }} {% for disk in vm_disks %}{{ disk.name }}({{ disk.size }}GB){% if not loop.last %}, {% endif %}{% endfor %}
+          {% endfor %}
+
+    - name: Mostrar tabla
+      debug:
+        msg: "{{ vm_table }}"
+
+    - name: Generar datos para CSV
+      set_fact:
+        csv_data: >-
+          {%- set result = [] -%}
+          {%- for vm in vm_info.ovirt_vms -%}
+            {%- set vm_disk_attachments = vm.disk_attachments | default([]) -%}
+            {%- set vm_nics = vm.nics | default([]) -%}
+            {%- set vm_disks = [] -%}
+            {%- set disk_names = [] -%}
+            {%- set disk_sizes = [] -%}
+            {%- set nic_macs = [] -%}
+            {%- set nic_ips = [] -%}
+            {%- set total_size = 0 -%}
+            {%- for attachment in vm_disk_attachments -%}
+              {%- for disk in all_disks_info.ovirt_disks -%}
+                {%- if disk.id == attachment.id -%}
+                  {%- set disk_size_gb = (disk.provisioned_size / 1024 / 1024 / 1024) | round(1) -%}
+                  {%- set total_size = total_size + disk_size_gb -%}
+                  {%- set _ = disk_names.append(disk.name) -%}
+                  {%- set _ = disk_sizes.append(disk_size_gb) -%}
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endfor -%}
+            {%- for nic in vm_nics -%}
+              {%- set mac_addr = nic.mac.address | default('N/A') -%}
+              {%- set ip_addr = 'N/A' -%}
+              {%- if nic.reported_devices is defined and nic.reported_devices | length > 0 and nic.reported_devices[0].ips is defined and nic.reported_devices[0].ips | length > 0 -%}
+                {%- set ip_addr = nic.reported_devices[0].ips[0].address -%}
+              {%- endif -%}
+              {%- set _ = nic_macs.append(mac_addr) -%}
+              {%- set _ = nic_ips.append(ip_addr) -%}
+            {%- endfor -%}
+            {%- set _ = result.append({
+              'vm_name': vm.name,
+              'status': vm.status,
+              'vcpus': (vm.cpu.topology.sockets * vm.cpu.topology.cores * vm.cpu.topology.threads),
+              'memory_mb': (vm.memory / 1024 / 1024) | int,
+              'memory_gb': ((vm.memory / 1024 / 1024 / 1024) | round(1)),
+              'disk_count': disk_names | length,
+              'total_disk_gb': total_size | round(1),
+              'disk_names': disk_names | join(';'),
+              'disk_sizes_gb': disk_sizes | join(';'),
+              'nic_count': vm_nics | length,
+              'nic_macs': nic_macs | join(';'),
+              'nic_ips': nic_ips | join(';'),
+              'cluster_id': vm.cluster.id,
+              'creation_time': vm.creation_time | default('N/A')
+            }) -%}
+          {%- endfor -%}
+          {{ result }}
+
+    - name: Crear archivo CSV
+      copy:
+        content: |
+          VM_Name,Status,vCPUs,Memory_MB,Memory_GB,Disk_Count,Total_Disk_GB,NIC_Count,Disk_Names,Disk_Sizes_GB,NIC_MACs,NIC_IPs,Cluster_ID,Creation_Time
+          {% for row in csv_data -%}
+          {{ row.vm_name }},{{ row.status }},{{ row.vcpus }},{{ row.memory_mb }},{{ row.memory_gb }},{{ row.disk_count }},{{ row.total_disk_gb }},{{ row.nic_count }},"{{ row.disk_names }}","{{ row.disk_sizes_gb }}","{{ row.nic_macs }}","{{ row.nic_ips }}",{{ row.cluster_id }},{{ row.creation_time }}
+          {% endfor %}
+        dest: "./ovirt_vms_inventory.csv"
+        mode: '0644'
+
+    - name: Mostrar ubicación del archivo CSV
+      debug:
+        msg: "Archivo CSV generado: ./ovirt_vms_inventory.csv"
+
+    - name: Mostrar información detallada de discos y NICs por VM
+      debug:
+        msg: |
+          VM: {{ item.name }}
+          Estado: {{ item.status }}
+          Disk Attachments: {{ item.disk_attachments | length }}
+          NICs: {{ item.nics | length }}
+          {% if item.disk_attachments | length > 0 %}
+          Discos:
+          {% for attachment in item.disk_attachments %}
+          {% for disk in all_disks_info.ovirt_disks %}
+          {% if disk.id == attachment.id %}
+          - {{ disk.name }}: {{ (disk.provisioned_size / 1024 / 1024 / 1024) | round(1) }} GB ({{ disk.status | default('N/A') }})
+          {% endif %}
+          {% endfor %}
+          {% endfor %}
+          {% else %}
+          Sin discos attachados
+          {% endif %}
+          {% if item.nics | length > 0 %}
+          Interfaces de Red:
+          {% for nic in item.nics %}
+          - NIC ID: {{ nic.id | default('N/A') }}
+            MAC: {{ nic.mac.address | default('N/A') }}
+            Interface: {{ nic.interface | default('N/A') }}
+            Linked: {{ nic.linked | default('N/A') }}
+            IP: {{ nic.reported_devices[0].ips[0].address | default('N/A') if nic.reported_devices is defined and nic.reported_devices | length > 0 and nic.reported_devices[0].ips is defined and nic.reported_devices[0].ips | length > 0 else 'N/A' }}
+          {% endfor %}
+          {% else %}
+          Sin NICs configuradas
+          {% endif %}
+      loop: "{{ vm_info.ovirt_vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Cerrar sesión oVirt
+      ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"

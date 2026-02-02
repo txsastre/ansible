@@ -1,0 +1,30 @@
+---
+- name: Crear usuarios con comentario personalizado desde CSV
+  hosts: all
+  become: false
+  gather_facts: false
+
+  vars:
+    ruta_csv_local: "/home/id3265/usuarios.csv"
+    campos: [ 'id', 'nombre', 'email' ]
+
+  tasks:
+
+    - name: Leer archivo CSV
+      community.general.read_csv:
+        path: "{{ ruta_csv_local }}"
+      register: csv_data
+      delegate_to: localhost
+      run_once: true
+
+    - name: Mostrar contenido completo de csv_data
+      debug:
+        var: csv_data
+      delegate_to: localhost
+      run_once: true
+
+    - name: Mostrar cada campo por separado
+      debug:
+        msg: "ID: {{ item.id }}, Nombre: {{ item.nombre }}, Correo: {{ item.email }}"
+      loop: "{{ csv_data.list }}"
+

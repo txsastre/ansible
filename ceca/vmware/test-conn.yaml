@@ -1,0 +1,19 @@
+- name: Test de conexión pura a vCenter (sin recuperar nada útil)
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - community.vmware
+
+  vars:
+#    vcenter_hostname: "cecabank.igsvra02p.igs.cloud"
+    vcenter_hostname: "158.87.146.6"
+    vcenter_username: "clients.cmos/es48820e"
+    vcenter_password: "C*EGnknoJtB21mr"
+
+  tasks:
+    - name: Test de conexión (simple autenticación)
+      community.vmware.vmware_about_info:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
