@@ -1,0 +1,111 @@
+- name: Obtener el nombre de usuario del HOME local (controlador)
+  set_fact:
+    local_user: "{{ lookup('env', 'HOME').split('/')[-1] }}"
+
+- name: Obtener hostname real del sistema remoto
+  ansible.builtin.command: hostname
+  register: remote_hostname
+- name: Definir ruta de evidencias
+  set_fact:
+    evidencia_dir: "/home/{{ local_user }}/{{ remote_hostname.stdout }}"
+
+- name: Borrar directorio remoto para limpieza previa
+  ansible.builtin.file:
+    path: "{{ evidencia_dir }}"
+    state: absent
+  when: nombre_fichero == "before"
+
+- name: Crear directorio en el host remoto
+  ansible.builtin.file:
+    path: "{{ evidencia_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Mostrar debug con la ruta remota
+  debug:
+    msg: "Ruta remota: {{ evidencia_dir }}"
+
+- name: Guardar fecha actual
+  shell: date > "{{ evidencia_dir }}/date_{{ nombre_fichero }}.txt"
+  args:
+    executable: /bin/bash
+
+- name: Guardar lista de actualizaciones disponibles
+  shell: yum list updates > "{{ evidencia_dir }}/yum_list-updates_{{ nombre_fichero }}.txt"
+  args:
+    executable: /bin/bash
+
+- name: Guardar versión del kernel
+  shell: uname -r > "{{ evidencia_dir }}/kernel_{{ nombre_fichero }}.txt"
+  args:
+    executable: /bin/bash
+
+- name: Guardar información del módulo ZFS
+  shell: modinfo zfs > "{{ evidencia_dir }}/modinfo_zfs_{{ nombre_fichero }}.txt" || true
+  args:
+    executable: /bin/bash
+
+- name: Guardar salida de ip a
+  shell: ip a > "{{ evidencia_dir }}/ip_a_{{ nombre_fichero }}.txt"
+  args:
+    executable: /bin/bash
+
+- name: Guardar salida de ip route
+  shell: ip route > "{{ evidencia_dir }}/ip_route_{{ nombre_fichero }}.txt"
+  args:
+    executable: /bin/bash
+- name: Guardar contenido de /proc/mounts
+  shell: cat /proc/mounts > "{{ evidencia_dir }}/proc_mount_{{ nombre_fichero }}.txt"
+  args:
+    executable: /bin/bash
+
+- name: Guardar df -h (sin tmpfs)
+  shell: |
+    df -h --output=source,fstype,size,target | \
+    egrep -v 'tmpfs|Filesystem' | sort > "{{ evidencia_dir }}/df_h_{{ nombre_fichero }}.txt"
+  args:
+    executable: /bin/bash
+
+- name: Guardar servicios activos
+  shell: systemctl --type=service --state=active | grep running | sort > "{{ evidencia_dir }}/systemctl_{{ nombre_fichero }}.txt"
+  args:
+    executable: /bin/bash
+
+- name: Guardar información de Java (alternatives)
+  shell: alternatives --display java > "{{ evidencia_dir }}/java_{{ nombre_fichero }}.txt"
+  args:
+    executable: /bin/bash
+  register: java_alternatives
+  failed_when: false
+
+- name: Copiar /etc/pki/ca-trust/extracted/java/cacerts
+  copy:
+    src: /etc/pki/ca-trust/extracted/java/cacerts
+    dest: "{{ evidencia_dir }}/cacerts"
+    remote_src: yes
+
+- name: Copiar /etc/fstab
+  copy:
+    src: /etc/fstab
+    dest: "{{ evidencia_dir }}/fstab"
+    remote_src: yes
+
+- name: Copiar /etc/default/grub
+  copy:
+    src: /etc/default/grub
+    dest: "{{ evidencia_dir }}/grub"
+    remote_src: yes
+
+- name: Encontrar scripts que contengan 'mount'
+  shell: "grep -l 'mount' /etc/init.d/*"
+  register: mount_scripts
+  failed_when: false
+
+- name: Ficheros con Mount en /etc/init.d/*
+  debug:
+    msg: >
+      {% if mount_scripts.stdout_lines %}
+        ==== {{ mount_scripts.stdout_lines | join(' ') }} ====
+      {% else %}
+        ==== No se encontraron scripts con 'mount' ====
+      {% endif %}

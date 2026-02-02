@@ -1,0 +1,236 @@
+---
+- name: Parcheo completo y post-check
+  hosts: all
+  become: true
+  gather_facts: true
+  gather_subset:
+    - min
+
+  vars:
+    max_retries: 3
+    retry_delay: 3
+    ruta_evidencias_local: "{{ lookup('env', 'HOME') }}/evidencias"
+    evidencia_dir: "/home/{{ lookup('env', 'HOME').split('/')[-1] }}/{{ ansible_hostname }}"
+    reboot: false  # se puede activar con -e "reboot=true"
+
+  tasks:
+
+    - name: Actualizar todos los paquetes descargados
+      ansible.builtin.dnf:
+        name: '*'
+        state: latest
+#        nobest: true      # añadido por los psql
+      register: update_result
+      retries: "{{ max_retries }}"
+      delay: "{{ retry_delay }}"
+      until: update_result is succeeded
+      tags: update
+
+    - name: Mostrar resumen actualización
+      debug:
+        msg: >
+          Paquetes actualizados: {{ update_result.changed | default(false) }}
+          {{ update_result.msg if update_result.msg is defined else '' }}
+      tags: update
+
+    - name: Mensaje final antes del reinicio (si aplica)
+      ansible.builtin.debug:
+        msg: |
+          * Actualización completada.
+          - Si todo ok - se procede a post-parcheo.
+      run_once: true
+      tags: update
+
+    # ==== REBOOT OPCIONAL ====
+    - name: Bloque de reinicio
+      block:
+        - name: Mostrar si se va a reiniciar
+          debug:
+            msg: "Reinicio confirmado"
+
+        - name: Reiniciar el sistema
+          reboot:
+            msg: "Reinicio solicitado por variable"
+            pre_reboot_delay: 10
+      when: reboot | bool
+      tags: reinicio
+
+    # ==== POST-PATCH ====
+    # ===================== include - EVIDENCIAS
+
+    - name: Incluir tareas de evidencias (After)
+      include_tasks: includes/evidencias.yaml
+      vars:
+        nombre_fichero: "after"
+      tags: evidencias
+
+
+    # ==== LIMPIEZA KERNELS ====
+    - name: Bloque de limpieza de kernels
+      block:
+        - name: Obtener versión mayor de RHEL
+          ansible.builtin.shell: "rpm -E %{rhel}"
+          register: rhel_version
+          changed_when: false
+
+        - name: Backup de /etc/yum.conf para RHEL7
+          ansible.builtin.copy:
+            src: /etc/yum.conf
+            dest: /etc/yum.conf.bak
+            remote_src: yes
+            owner: root
+            group: root
+            mode: '0644'
+          when:
+            - ansible_facts['distribution'] in ['RedHat', 'CentOS']
+            - rhel_version.stdout | int == 7
+
+        - name: Backup de /etc/dnf/dnf.conf para RHEL8 y superiores
+          ansible.builtin.copy:
+            src: /etc/dnf/dnf.conf
+            dest: /etc/dnf/dnf.conf.bak
+            remote_src: yes
+            owner: root
+            group: root
+            mode: '0644'
+          when:
+            - ansible_facts['distribution'] in ['RedHat', 'CentOS']
+            - rhel_version.stdout | int >= 8
+
+        - name: Modificar installonly_limit en /etc/yum.conf a 2 para RHEL7
+          ansible.builtin.lineinfile:
+            path: /etc/yum.conf
+            regexp: '^installonly_limit='
+            line: 'installonly_limit=2'
+            backup: yes
+          when:
+            - ansible_facts['distribution'] in ['RedHat', 'CentOS']
+            - rhel_version.stdout | int == 7
+
+        - name: Modificar installonly_limit en /etc/dnf/dnf.conf a 2 para RHEL8 y superiores
+          ansible.builtin.lineinfile:
+            path: /etc/dnf/dnf.conf
+            regexp: '^installonly_limit='
+            line: 'installonly_limit=2'
+            backup: yes
+          when:
+            - ansible_facts['distribution'] in ['RedHat', 'CentOS']
+            - rhel_version.stdout | int >= 8
+
+        - name: Limpiar kernels antiguos en RHEL7 con package-cleanup
+          ansible.builtin.shell: |
+            echo "y" | package-cleanup --oldkernels --count=2
+          register: cleanup_result_rhel7
+          failed_when: cleanup_result_rhel7.rc != 0 and
+                       "'No packages marked for removal' not in cleanup_result_rhel7.stderr"
+          when: rhel_version.stdout == "7"
+
+        - name: Limpiar kernels antiguos en RHEL8 y superiores con dnf remove
+          ansible.builtin.shell: |
+            echo "y" | dnf remove --oldinstallonly --setopt installonly_limit=2 -y
+          register: dnf_cleanup_result
+          failed_when: dnf_cleanup_result.rc != 0 and
+             (dnf_cleanup_result.stderr is not search('No .*installonly.* packages.*removal'))
+          when: rhel_version.stdout|int > 7
+
+        - name: Mostrar kernels instalados tras limpieza
+          ansible.builtin.shell: rpm -q kernel
+          register: kernel_list_post
+          changed_when: false
+
+        - name: Mostrar kernels instalados
+          debug:
+            msg: "Kernels instalados tras limpieza: {{ kernel_list_post.stdout_lines }}"
+
+      tags: kernel
+
+    - block:
+        - name: Comparar archivos systemctl
+          shell: diff systemctl_before.txt systemctl_after.txt || true
+          args:
+            chdir: "{{ evidencia_dir }}"
+          register: diff_systemctl_result
+          changed_when: false
+          failed_when: false
+          tags: evidencias
+
+        - name: Mostrar diferencias systemctl
+          fail:
+            msg: |
+              ❗ Diferencias encontradas entre systemctl_before.txt y systemctl_after.txt:
+              {{ diff_systemctl_result.stdout }}
+          when: diff_systemctl_result.stdout != ""
+          tags: evidencias
+          ignore_errors: yes
+
+        - name: Comparar archivos df_h
+          shell: diff df_h_before.txt df_h_after.txt || true
+          args:
+            chdir: "{{ evidencia_dir }}"
+          register: diff_df_h_result
+          changed_when: false
+          failed_when: false
+          tags: evidencias
+
+        - name: Mostrar diferencias df_h
+          fail:
+            msg: |
+              ❗ Diferencias encontradas entre df_h_before.txt y df_h_after.txt:
+              {{ diff_df_h_result.stdout }}
+          when: diff_df_h_result.stdout != ""
+          tags: evidencias
+          ignore_errors: yes
+
+    #==================== Informe  =============================
+    - block:
+
+        - name: Generar informe completo
+          ansible.builtin.shell: |
+            {
+              echo "===== INFORME DE ESTADO - {{ ansible_hostname }} ====="
+              echo
+              echo "Fecha actual:"
+              date
+              echo
+              echo "Sistema operativo (PRETTY_NAME):"
+              grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"'
+              echo
+              echo "Versión del Kernel:"
+              uname -r
+              echo
+              echo "Uptime:"
+              uptime
+              echo
+            } > "{{ evidencia_dir }}/Informe-{{ ansible_hostname }}.txt"
+          changed_when: false
+
+        - name: Informe - Fichero
+          debug:
+            msg: |
+               Informe generado: {{ evidencia_dir }}/Informe-{{ ansible_hostname }}.txt
+
+        # - name: Mostrar informe generado en pantalla
+          # ansible.builtin.shell: cat "{{ evidencia_dir }}/Informe-{{ ansible_hostname }}.txt"
+          # register: informe_contenido
+          # changed_when: false
+
+        - name: Mostrar contenido con cat
+          shell: cat "{{ evidencia_dir }}/Informe-{{ ansible_hostname }}.txt"
+          register: resultado_cat
+
+        - name: Informe - resumen
+          debug:
+            var: resultado_cat.stdout_lines
+
+    #========================================
+    - name: RECORDATORIO
+      debug:
+        msg: |
+          📌 Recordatorio final del playbook:
+          - Mandar correo : 'José Menéndez González' <jmenengo@cecabank.es>; 'Francisco Gabriel Serrano Marqués' <fsermar@cecabank.es>,
+          - CECA unix <CECAunix@kyndryl.com>; Gestion Cecabank <DG-GestionCecabank@kyndryl.com>; Cecabank - Gestión_OLD <Cecabank-Gestin@kyndryl.onmicrosoft.com> ,
+          - cgr@cecabank.es y los correos que se indican  en el excel de parcheo
+          - Comprueba que todos los servicios están funcionando
+      run_once: true
+      tags: evidencias
+

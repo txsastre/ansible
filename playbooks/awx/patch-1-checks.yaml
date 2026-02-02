@@ -1,0 +1,262 @@
+# borra repositorios
+# -e clean_repo=true
+---
+- name : Comprobacion antes parcheo
+  hosts: all
+  become: true
+  gather_facts: true
+  gather_subset:
+    - min
+  vars:
+    ruta_evidencias_local: "{{ lookup('env', 'HOME') }}/evidencias"
+    min_free_space_gb: 1
+    min_free_space_gb_usr: 1.4
+    min_free_space_boot_mb: 200
+
+  tasks:
+
+    - name: Verificar que todos los repos habilitados son LocalRepo*
+      block:
+
+        - name: Obtener IDs de repositorios habilitados (solo los válidos)
+          shell: |
+            dnf repolist enabled | awk 'BEGIN {found=0} /^repo id/ {found=1; next} found && NF {print $1}'
+          register: enabled_repo_ids
+          changed_when: false
+
+        - name: Verificar que todos los repos habilitados son LocalRepo*
+          assert:
+            that:
+              - enabled_repo_ids.stdout_lines | select('match', '^LocalRepo') | length == enabled_repo_ids.stdout_lines | length
+            msg: >
+              ERROR: Hay repositorios habilitados que no son LocalRepo*.
+              Repos encontrados: {{ enabled_repo_ids.stdout_lines }}
+
+      tags: repos-oficiales
+
+#==========================================
+    - name: bloque grub + VGS
+      block:
+        - name: Obtener VGs desde GRUB
+          shell: |
+            grep -o 'rd\.lvm\.lv=[^ ]*' /etc/default/grub | cut -d= -f2 | cut -d/ -f1 | sort -u
+          register: grub_vgs
+          changed_when: false
+
+        - name: Mostrar nombre VGs en GRUB
+          debug:
+            msg: "Grub contiene {{ grub_vgs.stdout_lines }}"
+
+        - name: Obtener VGs reales del sistema
+          shell: |
+            vgs --noheadings -o vg_name | awk '{$1=$1};1' | sort -u
+          register: system_vgs
+          changed_when: false
+
+        - name: Crear lista de VGs encontrados en sistema que están en GRUB
+          set_fact:
+            matched_vgs: "{{ matched_vgs | default([]) + [ item ] }}"
+          loop: "{{ grub_vgs.stdout_lines }}"
+          when: item in system_vgs.stdout_lines
+
+        - name: Mostrar VGs encontrados (OK)
+          debug:
+            msg: |
+              OK - Los siguientes VGs declarados en GRUB están presentes en el sistema:
+              {{ matched_vgs | join('\n') }}
+          when: matched_vgs is defined and matched_vgs | length > 0
+
+        - name: Abortamos si no hay VG coincidente
+          fail:
+            msg: |
+              ERROR : Ningún VG declarado en GRUB está presente en el sistema.
+              En muchas máquinas el VG del sistema no es el correcto y tenemos que modificarlo,
+              en ese caso creamos una copia de /etc/default/grub :  cp /etc/default/grub /etc/default/grub.bk
+              y modificamos el VG al correcto.
+              (Si hemos modificado el fichero, es recomendable ejecutar
+              grub2-mkconfig -o /boot/grub2/grub.cfg)
+          when: matched_vgs is not defined or matched_vgs | length == 0
+      tags: grub-vgs
+
+#=========================================
+    - block:
+        - name: Verificar la sintaxis de /etc/fstab
+          shell: findmnt --verify
+          register: fstab_check
+          changed_when: false
+          failed_when: fstab_check.rc != 0
+
+        - name: Mostrar resultado de la verificación de /etc/fstab
+          debug:
+            msg: "{{ fstab_check.stdout }}"
+
+        - name: Montar todos los sistemas de archivos definidos en /etc/fstab
+          shell: mount -a
+          register: mount_all
+          changed_when: false
+          failed_when: mount_all.rc != 0
+
+        - name: Mostrar resultado del comando mount -a
+          debug:
+            msg: "{{ mount_all.stdout }}"
+      tags: fstab-check
+
+# === verificar mounts =======================
+
+    - block:
+
+        - name: Copiar script check-mount al servidor
+          copy:
+            src: /home/id3265/ansible/ceca/scripts/check-mount.sh
+            dest: /tmp/check-mount.sh
+            mode: '0755'
+
+        - name: Ejecutar script de verificación de montajes persistentes
+          command: bash /tmp/check-mount.sh
+          register: check_mount
+          changed_when: false
+          failed_when: false
+
+        - name: Abortar playbook si hay errores de montajes
+          fail:
+            msg: "{{ check_mount.stdout }}"
+          when: check_mount.rc != 0
+
+      tags: check-mount
+
+
+#======= VERIFICAR ESPACIO EN DISCO ============================
+
+    - block:
+
+        - name: Check /boot has more than {{ min_free_space_boot_mb }} MB free
+          ansible.builtin.command: df --output=avail /boot
+          register: boot_df
+          changed_when: false
+
+        - name: Check /var has more than {{ min_free_space_gb }} GB free
+          ansible.builtin.command: df --output=avail /var
+          register: var_df
+          changed_when: false
+
+        - name: Check /usr has more than {{ min_free_space_gb_usr }} GB free
+          ansible.builtin.command: df --output=avail /usr
+          register: usr_df
+          changed_when: false
+
+        - name: Assert /boot has more than {{ min_free_space_boot_mb }} MB free
+          ansible.builtin.assert:
+            that:
+              - (boot_df.stdout_lines[1] | int) > (min_free_space_boot_mb * 1024)
+            fail_msg: "/boot does not have more than {{ min_free_space_boot_mb }} MB free space"
+
+        - name: Assert /var has more than {{ min_free_space_gb }} GB free
+          ansible.builtin.assert:
+            that:
+              - (var_df.stdout_lines[1] | int) * 1024 > (min_free_space_gb * 1024 * 1024 * 1024)
+            fail_msg: "/var does not have more than {{ min_free_space_gb }} GB free space"
+
+        - name: Assert /usr has more than {{ min_free_space_gb_usr }} GB free
+          ansible.builtin.assert:
+            that:
+              - (usr_df.stdout_lines[1] | int) * 1024 > (min_free_space_gb_usr * 1024 * 1024 * 1024)
+            fail_msg: "/usr does not have more than {{ min_free_space_gb_usr }} GB free space"
+
+      any_errors_fatal: true
+      tags: space-check
+
+
+# ===================== include - EVIDENCIAS
+
+    - name: Incluir tareas de evidencias (before)
+      include_tasks: includes/evidencias.yaml
+      vars:
+        nombre_fichero: "before"
+        borrar_evidencias: true
+      tags: evidencias
+
+
+#====================   JAVA evidencias =============================
+    - block:
+        - name: Verificar si existe la ruta Java específica
+          stat:
+            path: /usr/lib/jvm/java-1.7.0-openjdk-1.7.0.261-2.6.22.2.el7_8.x86_64/jre/lib/ext/
+          register: java_path
+
+        - name: Crear carpeta de destino en el controlador si no existe
+          local_action:
+            module: file
+            path: "{{ ruta_evidencias_local }}/{{ inventory_hostname }}/"
+            state: directory
+            mode: '0755'
+          when: java_path.stat.exists
+
+        - name: Traer bcmail*.jar desde remoto hacia controlador
+          fetch:
+            src: "/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.261-2.6.22.2.el7_8.x86_64/jre/lib/ext/bcmail*.jar"
+            dest: "{{ ruta_evidencias_local }}/{{ inventory_hostname }}/"
+            flat: yes
+          when: java_path.stat.exists
+          ignore_errors: yes
+
+        - name: Traer bcprov*.jar desde remoto hacia controlador
+          fetch:
+            src: "/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.261-2.6.22.2.el7_8.x86_64/jre/lib/ext/bcprov*.jar"
+            dest: "{{ ruta_evidencias_local }}/{{ inventory_hostname }}/"
+            flat: yes
+          when: java_path.stat.exists
+          ignore_errors: yes
+
+        - name: Traer SFProv*.jar desde remoto hacia controlador
+          fetch:
+            src: "/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.261-2.6.22.2.el7_8.x86_64/jre/lib/ext/SFProv*.jar"
+            dest: "{{ ruta_evidencias_local }}/{{ inventory_hostname }}/"
+            flat: yes
+          when: java_path.stat.exists
+          ignore_errors: yes
+
+      tags:
+        - evidencias
+        - java
+
+#====================== REPOS DOWNLOAD PACKAGES ==================
+
+
+    - name: Repos - Clean Repos
+      when: clean_repo | default(false) | bool
+      block:
+        - name: Limpiar toda la caché de dnf
+          ansible.builtin.command: dnf clean all
+
+        - name: Generar la caché de dnf
+          ansible.builtin.command: dnf makecache
+
+      tags: repos
+
+
+    - name: Repositorios Download
+      block:
+        - name: Descargar paquetes para instalar. NO instalamos. dnf -y upgrade --downloadonly
+          ansible.builtin.command: dnf -y upgrade --downloadonly
+          #ansible.builtin.command: dnf update --downloadonly --nobest  -y
+          register: resultado_descarga
+
+        - name: Mostrar salida limpia del comando
+          ansible.builtin.debug:
+            msg: "{{ resultado_descarga.stdout | regex_replace('[^\x00-\x7F]', '?') }}"
+
+      tags: repos
+#========================================
+
+    - name: RECORDATORIO
+      debug:
+        msg: |
+          - Recordatorio final del playbook:
+          - Hacer snapshot sin RAM
+          - Mandar correo :
+          - 'José Menéndez González' <jmenengo@cecabank.es>; 'Francisco Gabriel Serrano Marqués' <fsermar@cecabank.es>; CECA unix <CECAunix@kyndryl.com>; Gestion Cecabank <DG-GestionCecabank@kyndryl.com>; Cecabank - Gestión_OLD <Cecabank-Gestin@kyndryl.onmicrosoft.com> , cgr@cecabank.es
+          - y los correos que se indican  en el excel de parcheo
+          - Comprueba que todos los servicios están funcionando
+          - Ejecuta ahora --->  ansible-playbook ... patch-2-updpost.yaml -e reboot=true/false
+      run_once: true
+      tags: evidencias
